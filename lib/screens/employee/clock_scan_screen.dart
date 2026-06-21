@@ -1,8 +1,54 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
-class ClockScanScreen extends StatelessWidget {
+import '../../core/services/pointage_service.dart';
+
+class ClockScanScreen extends StatefulWidget {
   const ClockScanScreen({super.key});
+
+  @override
+  State<ClockScanScreen> createState() => _ClockScanScreenState();
+}
+
+class _ClockScanScreenState extends State<ClockScanScreen> {
+  bool isProcessing = false;
+
+Future<void> handleQrCode(String value) async {
+  if (isProcessing) return;
+
+  setState(() {
+    isProcessing = true;
+  });
+
+  final result = await PointageService.clockWithQr(value);
+
+  if (!mounted) return;
+
+  showCupertinoDialog(
+    context: context,
+    builder: (_) => CupertinoAlertDialog(
+      title: Text(result["success"] == true ? "Pointage enregistré" : "Erreur"),
+      content: Text(result["message"]?.toString() ?? ""),
+      actions: [
+        CupertinoDialogAction(
+          child: const Text("OK"),
+          onPressed: () {
+            Navigator.pop(context);
+
+            if (result["success"] == true) {
+              Navigator.pop(context, true);
+            } else {
+              setState(() {
+                isProcessing = false;
+              });
+            }
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -12,72 +58,51 @@ class ClockScanScreen extends StatelessWidget {
         middle: Text('Scanner QR Code'),
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(height: 30),
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
 
-              Container(
-                height: 320,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                height: 340,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: CupertinoColors.black,
                   borderRadius: BorderRadius.circular(28),
                 ),
-                child: const Center(
-                  child: Icon(
-                    CupertinoIcons.qrcode_viewfinder,
-                    color: CupertinoColors.white,
-                    size: 90,
-                  ),
+                clipBehavior: Clip.antiAlias,
+                child: MobileScanner(
+                  onDetect: (capture) {
+                    final barcode = capture.barcodes.firstOrNull;
+                    final value = barcode?.rawValue;
+
+                    if (value == null || value.isEmpty) return;
+
+                    handleQrCode(value);
+                  },
                 ),
               ),
+            ),
 
-              const SizedBox(height: 28),
+            const SizedBox(height: 28),
 
-              const Text(
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
                 'Scanne le QR Code affiché dans le magasin pour enregistrer ton pointage.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 17, color: Color(0xFF6B7280)),
               ),
+            ),
 
-              const Spacer(),
+            const SizedBox(height: 20),
 
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: CupertinoButton(
-                  color: const Color(0xFF007AFF),
-                  borderRadius: BorderRadius.circular(18),
-                  onPressed: () {
-                    showCupertinoDialog(
-                      context: context,
-                      builder: (_) => CupertinoAlertDialog(
-                        title: const Text('Pointage enregistré'),
-                        content: const Text(
-                          'Le pointage sera bientôt relié au QR Code dynamique et à la géolocalisation.',
-                        ),
-                        actions: [
-                          CupertinoDialogAction(
-                            child: const Text('OK'),
-                            onPressed: () {
-                              Navigator.pop(context);
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Simulation pointage',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            if (isProcessing)
+              const CupertinoActivityIndicator(radius: 14),
+
+            const Spacer(),
+          ],
         ),
       ),
     );

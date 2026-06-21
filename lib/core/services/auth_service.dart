@@ -11,7 +11,7 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        ApiService.uri("login.php"),
+        ApiService.auth("login.php"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "password": password}),
       );
@@ -21,21 +21,34 @@ class AuthService {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data["success"] == true) {
-        final user = data["user"];
+if (response.statusCode == 200 && data["success"] == true) {
+  final user = data["user"];
 
-        await SessionService.saveSession(
-          userId: int.tryParse(user["id"].toString()) ?? 0,
-          companyId: int.tryParse(user["company_id"].toString()) ?? 0,
-          role: user["role"]?.toString() ?? "",
-          token: "",
-          firstName: user["firstname"]?.toString(),
-          lastName: user["lastname"]?.toString(),
-          companyName: user["company_name"]?.toString(),
-        );
+  print("LOGIN USER: $user");
+  print("USER ID RAW: ${user["id"]}");
+  print("COMPANY ID RAW: ${user["company_id"]}");
+  print("ROLE RAW: ${user["role"]}");
 
-        return true;
-      }
+  final userId = int.tryParse(user["id"].toString());
+  final companyId = int.tryParse(user["company_id"].toString());
+
+  if (userId == null || userId <= 0 || companyId == null || companyId <= 0) {
+    print("SESSION ERROR: userId ou companyId invalide");
+    return false;
+  }
+
+  await SessionService.saveSession(
+    userId: userId,
+    companyId: companyId,
+    role: user["role"]?.toString() ?? "",
+    token: data["token"]?.toString() ?? "",
+    firstName: user["firstname"]?.toString(),
+    lastName: user["lastname"]?.toString(),
+    companyName: user["company_name"]?.toString(),
+  );
+
+  return true;
+}
 
       return false;
     } catch (e) {
