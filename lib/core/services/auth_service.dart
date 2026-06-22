@@ -56,4 +56,30 @@ if (response.statusCode == 200 && data["success"] == true) {
       return false;
     }
   }
+
+  static String? lastErrorMessage;
+
+static Future<bool> forgotPassword({
+  required String email,
+}) async {
+  try {
+    final response = await http.post(
+      ApiService.auth("forgot_password2.php"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    lastErrorMessage = data["message"]?.toString();
+
+    return data["success"] == true;
+  } catch (e) {
+    lastErrorMessage = e.toString();
+    return false;
+  }
+}
+
 }
