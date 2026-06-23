@@ -65,8 +65,30 @@ class SessionService {
     return prefs.getString(_tokenKey);
   }
 
-  static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-  }
+static Future<bool> isLoggedIn() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final userId = prefs.getInt(_userIdKey);
+  final companyId = prefs.getInt(_companyIdKey);
+  final token = prefs.getString(_tokenKey);
+
+  return userId != null &&
+      userId > 0 &&
+      companyId != null &&
+      companyId > 0 &&
+      token != null &&
+      token.isNotEmpty;
+}
+
+static Future<void> logout() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  await prefs.remove(_userIdKey);
+  await prefs.remove(_companyIdKey);
+  await prefs.remove(_roleKey);
+  await prefs.remove(_tokenKey);
+  await prefs.remove(_firstNameKey);
+  await prefs.remove(_lastNameKey);
+  await prefs.remove(_companyNameKey);
+}
 }

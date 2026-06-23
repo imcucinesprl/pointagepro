@@ -9,6 +9,7 @@ import 'employee/employee_home_screen.dart';
 import 'employee/employee_planning_screen.dart';
 import 'manager/manager_dashboard_screen.dart';
 import 'profile_screen.dart';
+import 'admin/qr_code_screen.dart';
 
 class MainTabScreen extends StatefulWidget {
   const MainTabScreen({super.key});
@@ -25,6 +26,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
   bool get canAccessManager {
     return ['admin', 'super_admin', 'platform_admin'].contains(role);
+  }
+  bool get canAccessQrCode {
+  return ['admin', 'super_admin', 'platform_admin'].contains(role);
   }
 
   bool get canAccessPlanning {
@@ -110,48 +114,57 @@ class _MainTabScreenState extends State<MainTabScreen> {
     }
 
     final items = <BottomNavigationBarItem>[
-      if (canAccessManager)
-        const BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.chart_bar_alt_fill),
-          activeIcon: Icon(CupertinoIcons.chart_bar_alt_fill),
-          label: 'Manager',
-        ),
+  if (canAccessManager)
+    const BottomNavigationBarItem(
+      icon: Icon(CupertinoIcons.chart_bar_alt_fill),
+      activeIcon: Icon(CupertinoIcons.chart_bar_alt_fill),
+      label: 'Manager',
+    ),
 
-      const BottomNavigationBarItem(
-        icon: Icon(CupertinoIcons.time),
-        activeIcon: Icon(CupertinoIcons.time_solid),
-        label: 'Pointage',
-      ),
+  const BottomNavigationBarItem(
+    icon: Icon(CupertinoIcons.time),
+    activeIcon: Icon(CupertinoIcons.time_solid),
+    label: 'Pointage',
+  ),
 
-      if (canAccessPlanning)
-        const BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.calendar),
-          activeIcon: Icon(CupertinoIcons.calendar_today),
-          label: 'Planning',
-        ),
+  if (canAccessQrCode)
+    const BottomNavigationBarItem(
+      icon: Icon(CupertinoIcons.qrcode),
+      activeIcon: Icon(CupertinoIcons.qrcode_viewfinder),
+      label: 'QR',
+    ),
 
-      const BottomNavigationBarItem(
-        icon: Icon(CupertinoIcons.person),
-        activeIcon: Icon(CupertinoIcons.person_fill),
-        label: 'Profil',
-      ),
-    ];
+  if (canAccessPlanning)
+    const BottomNavigationBarItem(
+      icon: Icon(CupertinoIcons.calendar),
+      activeIcon: Icon(CupertinoIcons.calendar_today),
+      label: 'Planning',
+    ),
 
-    final screens = <Widget>[
-      if (canAccessManager) const ManagerDashboardScreen(),
+  const BottomNavigationBarItem(
+    icon: Icon(CupertinoIcons.person),
+    activeIcon: Icon(CupertinoIcons.person_fill),
+    label: 'Profil',
+  ),
+];
 
-      const EmployeeHomeScreen(),
+final screens = <Widget>[
+  if (canAccessManager) const ManagerDashboardScreen(),
 
-      if (canAccessPlanning)
-        companyId != null && userId != null
-            ? EmployeePlanningScreen(
-                companyId: companyId!,
-                userId: userId!,
-              )
-            : const _SessionIncompleteScreen(),
+  const EmployeeHomeScreen(),
 
-      const ProfileScreen(),
-    ];
+  if (canAccessQrCode) const QrCodeScreen(),
+
+  if (canAccessPlanning)
+    companyId != null && userId != null
+        ? EmployeePlanningScreen(
+            companyId: companyId!,
+            userId: userId!,
+          )
+        : const _SessionIncompleteScreen(),
+
+  const ProfileScreen(),
+];
 
     return CupertinoTabScaffold(
       backgroundColor: AppColors.background,

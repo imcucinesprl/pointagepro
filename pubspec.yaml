@@ -3,7 +3,7 @@ description: PointagePro
 
 publish_to: 'none'
 
-version: 1.1.0+2
+version: 1.2.1+4
 
 environment:
   sdk: ^3.11.0
@@ -20,6 +20,7 @@ dependencies:
   mobile_scanner: ^7.0.1
   package_info_plus: ^8.3.0
   url_launcher: ^6.3.1
+  webview_flutter: ^4.13.0
 
 dev_dependencies:
   flutter_test:
@@ -31,11 +32,19 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/icon/pointagepro_logo.png
+
+  image_path: "assets/icon/pointagepro_icon.png"
+
   remove_alpha_ios: true
+
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/pointagepro_icon.png"
+
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/icon/pointagepro_logo.png
+    - assets/icon/pointagepro_icon.png

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../core/services/auth_service.dart';
 import 'main_tab_screen.dart';
-
+import 'package:flutter/services.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,12 +60,14 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = false;
     });
 
-    if (success) {
-      Navigator.pushReplacement(
-        context,
-        CupertinoPageRoute(builder: (_) => const MainTabScreen()),
-      );
-    } else {
+if (success) {
+  TextInput.finishAutofillContext(shouldSave: true);
+
+  Navigator.pushReplacement(
+    context,
+    CupertinoPageRoute(builder: (_) => const MainTabScreen()),
+  );
+} else {
       setState(() {
         errorMessage = "Email ou mot de passe incorrect.";
       });
@@ -192,37 +194,52 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 24),
 
-                        _GlassTextField(
-                          controller: emailController,
-                          placeholder: "Email",
-                          icon: CupertinoIcons.mail_solid,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
+ AutofillGroup(
+  child: Column(
+    children: [
+      _GlassTextField(
+        controller: emailController,
+        placeholder: "Email",
+        icon: CupertinoIcons.mail_solid,
+        keyboardType: TextInputType.emailAddress,
+        autofillHints: const [
+          AutofillHints.username,
+          AutofillHints.email,
+        ],
+        textInputAction: TextInputAction.next,
+      ),
 
-                        const SizedBox(height: 14),
+      const SizedBox(height: 14),
 
-                        _GlassTextField(
-                          controller: passwordController,
-                          placeholder: "Mot de passe",
-                          icon: CupertinoIcons.lock_fill,
-                          obscureText: obscurePassword,
-                          suffix: CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            minSize: 34,
-                            onPressed: () {
-                              setState(() {
-                                obscurePassword = !obscurePassword;
-                              });
-                            },
-                            child: Icon(
-                              obscurePassword
-                                  ? CupertinoIcons.eye_fill
-                                  : CupertinoIcons.eye_slash_fill,
-                              color: subtitle,
-                              size: 22,
-                            ),
-                          ),
-                        ),
+      _GlassTextField(
+        controller: passwordController,
+        placeholder: "Mot de passe",
+        icon: CupertinoIcons.lock_fill,
+        obscureText: obscurePassword,
+        autofillHints: const [
+          AutofillHints.password,
+        ],
+        textInputAction: TextInputAction.done,
+        suffix: CupertinoButton(
+          padding: EdgeInsets.zero,
+          minSize: 34,
+          onPressed: () {
+            setState(() {
+              obscurePassword = !obscurePassword;
+            });
+          },
+          child: Icon(
+            obscurePassword
+                ? CupertinoIcons.eye_fill
+                : CupertinoIcons.eye_slash_fill,
+            color: subtitle,
+            size: 22,
+          ),
+        ),
+      ),
+    ],
+  ),
+),
 
                         const SizedBox(height: 10),
 
@@ -412,6 +429,8 @@ class _GlassTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.suffix,
+    this.autofillHints,
+    this.textInputAction,
   });
 
   final TextEditingController controller;
@@ -420,6 +439,8 @@ class _GlassTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final Widget? suffix;
+  final Iterable<String>? autofillHints;
+  final TextInputAction? textInputAction;
 
   @override
   Widget build(BuildContext context) {
@@ -427,6 +448,8 @@ class _GlassTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      autofillHints: autofillHints,
+      textInputAction: textInputAction,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       placeholder: placeholder,
       placeholderStyle: const TextStyle(

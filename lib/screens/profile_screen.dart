@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../core/services/session_service.dart';
 import 'login_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../core/services/update_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,18 +23,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color text = Color(0xFF111827);
   static const Color subtitle = Color(0xFF6B7280);
   static const Color background = Color(0xFFF3F6FB);
+  static const Color orange = Color(0xFFFF9500);
 
   String firstName = '';
   String lastName = '';
   String companyName = '';
   String role = '';
   String managerName = '';
+  String appVersion = '';
+  String buildNumber = '';
+  String latestVersion = '';
+  bool updateAvailable = false;
 
-  @override
-  void initState() {
-    super.initState();
-    loadSession();
-  }
+@override
+void initState() {
+  super.initState();
+  loadSession();
+  loadVersionAndUpdateStatus();
+}
+
+Future<void> loadVersionAndUpdateStatus() async {
+  final info = await PackageInfo.fromPlatform();
+  final updateData = await UpdateService.check();
+
+  final current = info.version;
+  final build = info.buildNumber;
+  final latest = updateData?['latest_version']?.toString() ?? '';
+
+  if (!mounted) return;
+
+  setState(() {
+    appVersion = current;
+    buildNumber = build;
+    latestVersion = latest;
+    updateAvailable = latest.isNotEmpty &&
+        UpdateService.isVersionLower(current, latest);
+  });
+}
 
   Future<void> loadSession() async {
     final f = await SessionService.getFirstName();
@@ -197,6 +224,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
+
+const SizedBox(height: 18),
+
+_GlassCard(
+  child: Row(
+    children: [
+      _IconBubble(
+        icon: updateAvailable
+            ? CupertinoIcons.exclamationmark_triangle_fill
+            : CupertinoIcons.checkmark_seal_fill,
+        color: updateAvailable ? orange : green,
+      ),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Version actuelle',
+              style: TextStyle(
+                color: text,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'v$appVersion ($buildNumber)',
+              style: const TextStyle(
+                color: subtitle,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      Text(
+        updateAvailable ? 'Mise à jour' : 'À jour',
+        style: TextStyle(
+          color: updateAvailable ? orange : green,
+          fontSize: 15,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  ),
+),
+
                 const SizedBox(height: 18),
                 CupertinoButton(
                   padding: EdgeInsets.zero,
