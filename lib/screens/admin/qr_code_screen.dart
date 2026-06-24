@@ -45,10 +45,9 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     });
   }
 
-
-String get qrUrl {
-  return 'https://taskflowapp.eu/pointagepro/qr_generator.php?company_id=$companyId&mobile=1';
-}
+  String get qrUrl {
+    return 'https://taskflowapp.eu/pointagepro/qr_generator.php?company_id=$companyId&mobile=1';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,142 +60,54 @@ String get qrUrl {
         child: isLoading
             ? const Center(child: CupertinoActivityIndicator())
             : companyId == null
-                ? const Center(
-                    child: Text('Entreprise introuvable'),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      _HeroCard(),
+            ? const Center(child: Text('Entreprise introuvable'))
+            : ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  _HeroCard(),
 
-                      const SizedBox(height: 18),
+                  const SizedBox(height: 18),
 
-                      _GlassCard(
-                        child: Column(
+                  _GlassCard(
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  height: 54,
-                                  width: 54,
-                                  decoration: BoxDecoration(
-                                    color: blue.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.building_2_fill,
-                                    color: blue,
-                                    size: 28,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Flexible(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        companyName.isEmpty
-                                            ? 'Votre entreprise'
-                                            : companyName,
-                                        style: const TextStyle(
-                                          color: text,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      Text(
-                                        'ID entreprise : $companyId',
-                                        style: const TextStyle(
-                                          color: subtitle,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-const SizedBox(height: 28),
-
-Container(
-  width: double.infinity,
-  height: 430,
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(28),
-    border: Border.all(
-      color: blue.withOpacity(0.35),
-      width: 2,
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: blue.withOpacity(0.12),
-        blurRadius: 28,
-        offset: const Offset(0, 14),
-      ),
-    ],
-  ),
-  child: Stack(
-    children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: WebViewWidget(
-          controller: WebViewController()
-            ..setJavaScriptMode(JavaScriptMode.unrestricted)
-            ..loadRequest(Uri.parse(qrUrl)),
-        ),
-      ),
-
-      Positioned.fill(
-        child: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () {
-            Navigator.push(
-              context,
-              CupertinoPageRoute(
-                fullscreenDialog: true,
-                builder: (_) => FullScreenQrScreen(
-                  qrUrl: qrUrl,
-                  companyName: companyName,
-                ),
-              ),
-            );
-          },
-          child: Container(
-            color: CupertinoColors.transparent,
-          ),
-        ),
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 22),
-
                             Container(
-                              padding: const EdgeInsets.all(16),
+                              height: 54,
+                              width: 54,
                               decoration: BoxDecoration(
-                                color: blue.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(20),
+                                color: blue.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(18),
                               ),
-                              child: const Row(
+                              child: const Icon(
+                                CupertinoIcons.building_2_fill,
+                                color: blue,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Flexible(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    CupertinoIcons.info_circle_fill,
-                                    color: blue,
+                                  Text(
+                                    companyName.isEmpty
+                                        ? 'Votre entreprise'
+                                        : companyName,
+                                    style: const TextStyle(
+                                      color: text,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Affichez ce code dans un endroit visible pour permettre aux employés de pointer.',
-                                      style: TextStyle(
-                                        color: subtitle,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  Text(
+                                    'ID entreprise : $companyId',
+                                    style: const TextStyle(
+                                      color: subtitle,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
@@ -204,33 +115,120 @@ const SizedBox(height: 22),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 28),
+
+                        Container(
+                          width: double.infinity,
+                          height: 430,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: blue.withOpacity(0.35),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: blue.withOpacity(0.12),
+                                blurRadius: 28,
+                                offset: const Offset(0, 14),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(26),
+                                child: WebViewWidget(
+                                  controller: WebViewController()
+                                    ..setJavaScriptMode(
+                                      JavaScriptMode.unrestricted,
+                                    )
+                                    ..loadRequest(Uri.parse(qrUrl)),
+                                ),
+                              ),
+
+                              Positioned.fill(
+                                child: CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      CupertinoPageRoute(
+                                        fullscreenDialog: true,
+                                        builder: (_) => FullScreenQrScreen(
+                                          qrUrl: qrUrl,
+                                          companyName: companyName,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    color: CupertinoColors.transparent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: blue.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.info_circle_fill,
+                                color: blue,
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Affichez ce code dans un endroit visible pour permettre aux employés de pointer.',
+                                  style: TextStyle(
+                                    color: subtitle,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatCard(
+                          icon: CupertinoIcons.qrcode,
+                          title: 'QR actif',
+                          subtitle: 'Entreprise',
+                          color: blue,
+                        ),
                       ),
-
-                      const SizedBox(height: 18),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              icon: CupertinoIcons.qrcode,
-                              title: 'QR actif',
-                              subtitle: 'Entreprise',
-                              color: blue,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatCard(
-                              icon: CupertinoIcons.checkmark_shield_fill,
-                              title: 'Sécurisé',
-                              subtitle: 'Pointage',
-                              color: green,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _StatCard(
+                          icon: CupertinoIcons.checkmark_shield_fill,
+                          title: 'Sécurisé',
+                          subtitle: 'Pointage',
+                          color: green,
+                        ),
                       ),
                     ],
                   ),
+                ],
+              ),
       ),
     );
   }
@@ -244,10 +242,7 @@ class _HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            _QrCodeScreenState.blue,
-            _QrCodeScreenState.purple,
-          ],
+          colors: [_QrCodeScreenState.blue, _QrCodeScreenState.purple],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

@@ -1,4 +1,4 @@
-package com.example.pointagepro
+package com.izs.pointagepro
 
 import io.flutter.embedding.android.FlutterActivity
 

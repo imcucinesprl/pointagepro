@@ -27,8 +27,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
   bool get canAccessManager {
     return ['admin', 'super_admin', 'platform_admin'].contains(role);
   }
+
   bool get canAccessQrCode {
-  return ['admin', 'super_admin', 'platform_admin'].contains(role);
+    return ['admin', 'super_admin', 'platform_admin'].contains(role);
   }
 
   bool get canAccessPlanning {
@@ -47,10 +48,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
     super.initState();
     loadSession();
 
-    Future.delayed(
-      const Duration(milliseconds: 800),
-      checkForUpdates,
-    );
+    Future.delayed(const Duration(milliseconds: 800), checkForUpdates);
   }
 
   Future<void> loadSession() async {
@@ -83,22 +81,12 @@ class _MainTabScreenState extends State<MainTabScreen> {
       return;
     }
 
-    final forceUpdate = UpdateService.isVersionLower(
-      current,
-      minimum,
-    );
+    final forceUpdate = UpdateService.isVersionLower(current, minimum);
 
-    final updateAvailable = UpdateService.isVersionLower(
-      current,
-      latest,
-    );
+    final updateAvailable = UpdateService.isVersionLower(current, latest);
 
     if (forceUpdate || updateAvailable) {
-      await UpdateDialog.show(
-        context,
-        data,
-        forceUpdate,
-      );
+      await UpdateDialog.show(context, data, forceUpdate);
     }
   }
 
@@ -107,64 +95,59 @@ class _MainTabScreenState extends State<MainTabScreen> {
     if (isLoading) {
       return const CupertinoPageScaffold(
         backgroundColor: AppColors.background,
-        child: Center(
-          child: CupertinoActivityIndicator(radius: 14),
-        ),
+        child: Center(child: CupertinoActivityIndicator(radius: 14)),
       );
     }
 
     final items = <BottomNavigationBarItem>[
-  if (canAccessManager)
-    const BottomNavigationBarItem(
-      icon: Icon(CupertinoIcons.chart_bar_alt_fill),
-      activeIcon: Icon(CupertinoIcons.chart_bar_alt_fill),
-      label: 'Manager',
-    ),
+      if (canAccessManager)
+        const BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.chart_bar_alt_fill),
+          activeIcon: Icon(CupertinoIcons.chart_bar_alt_fill),
+          label: 'Manager',
+        ),
 
-  const BottomNavigationBarItem(
-    icon: Icon(CupertinoIcons.time),
-    activeIcon: Icon(CupertinoIcons.time_solid),
-    label: 'Pointage',
-  ),
+      const BottomNavigationBarItem(
+        icon: Icon(CupertinoIcons.time),
+        activeIcon: Icon(CupertinoIcons.time_solid),
+        label: 'Pointage',
+      ),
 
-  if (canAccessQrCode)
-    const BottomNavigationBarItem(
-      icon: Icon(CupertinoIcons.qrcode),
-      activeIcon: Icon(CupertinoIcons.qrcode_viewfinder),
-      label: 'QR',
-    ),
+      if (canAccessQrCode)
+        const BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.qrcode),
+          activeIcon: Icon(CupertinoIcons.qrcode_viewfinder),
+          label: 'QR',
+        ),
 
-  if (canAccessPlanning)
-    const BottomNavigationBarItem(
-      icon: Icon(CupertinoIcons.calendar),
-      activeIcon: Icon(CupertinoIcons.calendar_today),
-      label: 'Planning',
-    ),
+      if (canAccessPlanning)
+        const BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.calendar),
+          activeIcon: Icon(CupertinoIcons.calendar_today),
+          label: 'Planning',
+        ),
 
-  const BottomNavigationBarItem(
-    icon: Icon(CupertinoIcons.person),
-    activeIcon: Icon(CupertinoIcons.person_fill),
-    label: 'Profil',
-  ),
-];
+      const BottomNavigationBarItem(
+        icon: Icon(CupertinoIcons.person),
+        activeIcon: Icon(CupertinoIcons.person_fill),
+        label: 'Profil',
+      ),
+    ];
 
-final screens = <Widget>[
-  if (canAccessManager) const ManagerDashboardScreen(),
+    final screens = <Widget>[
+      if (canAccessManager) const ManagerDashboardScreen(),
 
-  const EmployeeHomeScreen(),
+      const EmployeeHomeScreen(),
 
-  if (canAccessQrCode) const QrCodeScreen(),
+      if (canAccessQrCode) const QrCodeScreen(),
 
-  if (canAccessPlanning)
-    companyId != null && userId != null
-        ? EmployeePlanningScreen(
-            companyId: companyId!,
-            userId: userId!,
-          )
-        : const _SessionIncompleteScreen(),
+      if (canAccessPlanning)
+        companyId != null && userId != null
+            ? EmployeePlanningScreen(companyId: companyId!, userId: userId!)
+            : const _SessionIncompleteScreen(),
 
-  const ProfileScreen(),
-];
+      const ProfileScreen(),
+    ];
 
     return CupertinoTabScaffold(
       backgroundColor: AppColors.background,
@@ -196,9 +179,7 @@ class _SessionIncompleteScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Planning'),
-      ),
+      navigationBar: const CupertinoNavigationBar(middle: Text('Planning')),
       child: SafeArea(
         child: Center(
           child: Container(
@@ -236,10 +217,7 @@ class _SessionIncompleteScreen extends StatelessWidget {
                 Text(
                   'Impossible de récupérer les informations utilisateur.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.subtitle,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: AppColors.subtitle, fontSize: 14),
                 ),
               ],
             ),

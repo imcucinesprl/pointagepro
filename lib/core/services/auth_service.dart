@@ -21,34 +21,40 @@ class AuthService {
 
       final data = jsonDecode(response.body);
 
-if (response.statusCode == 200 && data["success"] == true) {
-  final user = data["user"];
+      if (response.statusCode == 200 && data["success"] == true) {
+        final user = data["user"];
 
-  print("LOGIN USER: $user");
-  print("USER ID RAW: ${user["id"]}");
-  print("COMPANY ID RAW: ${user["company_id"]}");
-  print("ROLE RAW: ${user["role"]}");
+        print("LOGIN USER: $user");
+        print("USER ID RAW: ${user["id"]}");
+        print("COMPANY ID RAW: ${user["company_id"]}");
+        print("ROLE RAW: ${user["role"]}");
 
-  final userId = int.tryParse(user["id"].toString());
-  final companyId = int.tryParse(user["company_id"].toString());
+        final userId = int.tryParse(user["id"].toString());
+        final companyId = int.tryParse(user["company_id"].toString());
 
-  if (userId == null || userId <= 0 || companyId == null || companyId <= 0) {
-    print("SESSION ERROR: userId ou companyId invalide");
-    return false;
-  }
+        if (userId == null ||
+            userId <= 0 ||
+            companyId == null ||
+            companyId <= 0) {
+          print("SESSION ERROR: userId ou companyId invalide");
+          return false;
+        }
 
-  await SessionService.saveSession(
-    userId: userId,
-    companyId: companyId,
-    role: user["role"]?.toString() ?? "",
-    token: data["token"]?.toString() ?? "",
-    firstName: user["firstname"]?.toString(),
-    lastName: user["lastname"]?.toString(),
-    companyName: user["company_name"]?.toString(),
-  );
+        final company = data["company"];
 
-  return true;
-}
+        await SessionService.saveSession(
+          userId: userId,
+          companyId: companyId,
+          role: user["role"]?.toString() ?? "",
+          token: data["token"]?.toString() ?? "",
+          firstName: user["firstname"]?.toString(),
+          lastName: user["lastname"]?.toString(),
+          companyName:
+              company?["name"]?.toString() ?? user["company_name"]?.toString(),
+        );
+
+        return true;
+      }
 
       return false;
     } catch (e) {
@@ -59,27 +65,22 @@ if (response.statusCode == 200 && data["success"] == true) {
 
   static String? lastErrorMessage;
 
-static Future<bool> forgotPassword({
-  required String email,
-}) async {
-  try {
-    final response = await http.post(
-      ApiService.auth("forgot_password2.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-      }),
-    );
+  static Future<bool> forgotPassword({required String email}) async {
+    try {
+      final response = await http.post(
+        ApiService.auth("forgot_password2.php"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      );
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    lastErrorMessage = data["message"]?.toString();
+      lastErrorMessage = data["message"]?.toString();
 
-    return data["success"] == true;
-  } catch (e) {
-    lastErrorMessage = e.toString();
-    return false;
+      return data["success"] == true;
+    } catch (e) {
+      lastErrorMessage = e.toString();
+      return false;
+    }
   }
-}
-
 }
