@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/services/pointage_service.dart';
+import 'package:flutter/services.dart';
 
 class ClockScanScreen extends StatefulWidget {
   const ClockScanScreen({super.key});
@@ -19,48 +20,67 @@ class _ClockScanScreenState extends State<ClockScanScreen> {
 
   bool isProcessing = false;
 
-  Future<void> handleQrCode(String value) async {
-    if (isProcessing) return;
+Future<void> handleQrCode(String value) async {
+  if (isProcessing) return;
 
-    setState(() {
-      isProcessing = true;
-    });
+  setState(() {
+    isProcessing = true;
+  });
 
-    final result = await PointageService.clockWithQr(value);
+  final result = await PointageService.clockWithQr(value);
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    await showCupertinoDialog(
-      context: context,
-      builder: (dialogContext) => CupertinoAlertDialog(
-        title: Text(
-          result["success"] == true ? "Pointage enregistré" : "Erreur",
-        ),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(result["message"]?.toString() ?? ""),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text("OK"),
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-            },
-          ),
-        ],
-      ),
-    );
+  final bool success = result["success"] == true;
+  final String message = result["message"]?.toString() ?? "";
 
-    if (!mounted) return;
-
-    if (result["success"] == true) {
-      Navigator.of(context).pop(true);
-    } else {
-      setState(() {
-        isProcessing = false;
-      });
-    }
+  if (success) {
+    HapticFeedback.lightImpact();
+  } else {
+    HapticFeedback.heavyImpact();
   }
+
+  await showGeneralDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierLabel: "Pointage",
+    barrierColor: Colors.black.withOpacity(0.35),
+    transitionDuration: const Duration(milliseconds: 260),
+    pageBuilder: (_, __, ___) {
+      return _PointageResultDialog(
+        success: success,
+        title: success ? "Pointage enregistré" : "Pointage refusé",
+        message: message.isEmpty
+            ? success
+                ? "Votre pointage a été enregistré avec succès."
+                : "Impossible de valider ce pointage."
+            : message,
+      );
+    },
+    transitionBuilder: (_, animation, __, child) {
+      return FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+          ),
+          child: child,
+        ),
+      );
+    },
+  );
+
+  if (!mounted) return;
+
+  if (success) {
+    Navigator.of(context).pop(true);
+  } else {
+    setState(() {
+      isProcessing = false;
+    });
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -449,6 +469,185 @@ class _Corner extends StatelessWidget {
             right: !isLeft
                 ? const BorderSide(color: Colors.white, width: 4)
                 : BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PointageResultDialog extends StatefulWidget {
+  const _PointageResultDialog({
+    required this.success,
+    required this.title,
+    required this.message,
+  });
+
+  final bool success;
+  final String title;
+  final String message;
+
+  @override
+  State<_PointageResultDialog> createState() => _PointageResultDialogState();
+}
+
+class _PointageResultDialogState extends State<_PointageResultDialog> {
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.success) {
+      Future.delayed(const Duration(milliseconds: 1800), () {
+        if (!mounted) return;
+        Navigator.of(context).pop();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color =
+        widget.success ? const Color(0xFF22C55E) : const Color(0xFFFF3B30);
+
+    final IconData icon =
+        widget.success ? CupertinoIcons.checkmark : CupertinoIcons.xmark;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(24, 30, 24, 22),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.88),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.75),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.22),
+                    blurRadius: 35,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 104,
+                    width: 104,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color.withOpacity(0.15),
+                    ),
+                    child: Center(
+                      child: Container(
+                        height: 78,
+                        width: 78,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              color.withOpacity(0.85),
+                              color,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withOpacity(0.35),
+                              blurRadius: 24,
+                              spreadRadius: 3,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          icon,
+                          color: Colors.white,
+                          size: 44,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  Text(
+                    widget.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Text(
+                    widget.message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 16,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+
+                  const SizedBox(height: 26),
+
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Container(
+                      height: 54,
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: widget.success
+                              ? [
+                                  const Color(0xFF0A84FF),
+                                  const Color(0xFF0066FF),
+                                ]
+                              : [
+                                  const Color(0xFFFF4D5E),
+                                  const Color(0xFFFF2D55),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.25),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        widget.success ? "Parfait !" : "Réessayer",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
