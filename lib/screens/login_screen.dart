@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/services/auth_service.dart';
 import 'main_tab_screen.dart';
 import 'package:flutter/services.dart';
+import 'register_company_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -118,6 +119,13 @@ if (success) {
           : "Impossible d'envoyer l'email de réinitialisation.";
     });
   }
+
+  void openRegisterCompany() {
+  Navigator.push(
+    context,
+    CupertinoPageRoute(builder: (_) => const RegisterCompanyScreen()),
+  );
+}
 
   @override
   void dispose() {
@@ -345,6 +353,58 @@ if (success) {
                   ),
 
                   const SizedBox(height: 20),
+
+_GlassCard(
+  padding: const EdgeInsets.all(18),
+  child: Column(
+    children: [
+      const Text(
+        "Nouvelle entreprise ?",
+        style: TextStyle(
+          color: _LoginScreenState.subtitle,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 12),
+      CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: isLoading ? null : openRegisterCompany,
+        child: Container(
+          height: 54,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: _LoginScreenState.blue.withOpacity(0.25),
+            ),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                CupertinoIcons.building_2_fill,
+                color: _LoginScreenState.blue,
+                size: 22,
+              ),
+              SizedBox(width: 10),
+              Text(
+                "Créer une entreprise",
+                style: TextStyle(
+                  color: _LoginScreenState.blue,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+
+const SizedBox(height: 20),
 
                   const Text(
                     "PointagePro • Pointage & présence équipe",
