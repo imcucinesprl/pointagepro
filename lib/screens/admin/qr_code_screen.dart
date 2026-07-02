@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/session_service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'fullscreen_qr_screen.dart';
+import '../../core/services/pointage_service.dart';
 
 class QrCodeScreen extends StatefulWidget {
   const QrCodeScreen({super.key});
@@ -32,18 +33,42 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     loadData();
   }
 
-  Future<void> loadData() async {
-    final id = await SessionService.getCompanyId();
-    final name = await SessionService.getCompanyName();
+Future<void> loadData() async {
+  final result = await PointageService.me();
 
-    if (!mounted) return;
+  if (result["success"] == true) {
+    final apiCompany = result["company"];
 
-    setState(() {
-      companyId = id;
-      companyName = name;
-      isLoading = false;
-    });
+    if (apiCompany != null) {
+      final newCompanyId = int.tryParse(apiCompany["id"].toString()) ?? 0;
+      final newCompanyName = apiCompany["name"]?.toString() ?? '';
+
+      await SessionService.saveCompanyId(newCompanyId);
+      await SessionService.saveCompanyName(newCompanyName);
+
+      if (!mounted) return;
+
+      setState(() {
+        companyId = newCompanyId;
+        companyName = newCompanyName;
+        isLoading = false;
+      });
+
+      return;
+    }
   }
+
+  final id = await SessionService.getCompanyId();
+  final name = await SessionService.getCompanyName();
+
+  if (!mounted) return;
+
+  setState(() {
+    companyId = id;
+    companyName = name;
+    isLoading = false;
+  });
+}
 
   String get qrUrl {
     return 'https://taskflowapp.eu/pointagepro/qr_generator.php?company_id=$companyId&mobile=1';

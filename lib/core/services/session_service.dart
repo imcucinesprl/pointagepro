@@ -65,6 +65,26 @@ class SessionService {
     return prefs.getString(_tokenKey);
   }
 
+  static Future<void> saveCompanyId(int companyId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt(_companyIdKey, companyId);
+}
+
+static Future<void> saveCompanyName(String companyName) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_companyNameKey, companyName);
+}
+
+static Future<void> saveFirstName(String firstName) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_firstNameKey, firstName);
+}
+
+static Future<void> saveLastName(String lastName) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_lastNameKey, lastName);
+}
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
 

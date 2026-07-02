@@ -7,6 +7,7 @@ import '../core/services/session_service.dart';
 import 'login_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../core/services/update_service.dart';
+import '../core/services/pointage_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -61,23 +62,69 @@ Future<void> loadVersionAndUpdateStatus() async {
   });
 }
 
-  Future<void> loadSession() async {
-    final f = await SessionService.getFirstName();
-    final l = await SessionService.getLastName();
-    final c = await SessionService.getCompanyName();
-    final r = await SessionService.getRole();
+Future<void> loadSession() async {
+  final result = await PointageService.me();
+
+  if (result["success"] == true) {
+    final apiCompany = result["company"] as Map<String, dynamic>?;
+    final apiUser = result["user"] as Map<String, dynamic>?;
+
+    final newCompanyId =
+        int.tryParse(apiCompany?["id"]?.toString() ?? "") ?? 0;
+    final newCompanyName =
+        apiCompany?["name"]?.toString() ?? '';
+
+    final newFirstName =
+        apiUser?["firstname"]?.toString() ?? '';
+    final newLastName =
+        apiUser?["lastname"]?.toString() ?? '';
+    final newRole =
+        apiUser?["role"]?.toString() ?? '';
+
+    if (newCompanyId > 0) {
+      await SessionService.saveCompanyId(newCompanyId);
+    }
+
+    if (newCompanyName.isNotEmpty) {
+      await SessionService.saveCompanyName(newCompanyName);
+    }
+
+    if (newFirstName.isNotEmpty) {
+      await SessionService.saveFirstName(newFirstName);
+    }
+
+    if (newLastName.isNotEmpty) {
+      await SessionService.saveLastName(newLastName);
+    }
 
     if (!mounted) return;
 
     setState(() {
-      firstName = f;
-      lastName = l;
-      companyName = c;
-      role = r ?? '';
-
-      managerName = f ?? '';
+      firstName = newFirstName;
+      lastName = newLastName;
+      companyName = newCompanyName;
+      role = newRole;
+      managerName = newFirstName;
     });
+
+    return;
   }
+
+  final f = await SessionService.getFirstName();
+  final l = await SessionService.getLastName();
+  final c = await SessionService.getCompanyName();
+  final r = await SessionService.getRole();
+
+  if (!mounted) return;
+
+  setState(() {
+    firstName = f;
+    lastName = l;
+    companyName = c;
+    role = r ?? '';
+    managerName = f;
+  });
+}
 
   String get roleLabel {
     return switch (role) {

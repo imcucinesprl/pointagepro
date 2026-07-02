@@ -75,6 +75,27 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
 
     if (!mounted || result["success"] != true) return;
 
+    debugPrint("ME API = ${result["company"]}");
+
+    final apiCompany = result["company"] as Map<String, dynamic>?;
+final apiUser = result["user"] as Map<String, dynamic>?;
+
+final newCompanyId = int.tryParse(apiCompany?["id"]?.toString() ?? "") ?? 0;
+final newCompanyName = apiCompany?["name"]?.toString() ?? companyName;
+final newFirstName = apiUser?["firstname"]?.toString() ?? firstName;
+
+if (newCompanyId > 0) {
+  await SessionService.saveCompanyId(newCompanyId);
+}
+
+if (newCompanyName.isNotEmpty) {
+  await SessionService.saveCompanyName(newCompanyName);
+}
+
+if (newFirstName.isNotEmpty) {
+  await SessionService.saveFirstName(newFirstName);
+}
+
     final pointages = result["pointages"] as List<dynamic>;
 
     String arrival = '--:--';
@@ -97,25 +118,28 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
 
     final storeSettings = result["store_settings"] as Map<String, dynamic>?;
 
-    setState(() {
-      todayStatus = result["today_status"] ?? 'not_clocked';
-      arrivalTime = arrival;
-      pauseTime = pause;
-      departureTime = departure;
+setState(() {
+  firstName = newFirstName;
+  companyName = newCompanyName;
 
-      allowedRadius = int.tryParse(
-            storeSettings?["allowed_radius"]?.toString() ?? "100",
-          ) ??
-          100;
+  todayStatus = result["today_status"] ?? 'not_clocked';
+  arrivalTime = arrival;
+  pauseTime = pause;
+  departureTime = departure;
 
-      distanceMeters = double.tryParse(
-        result["distance_meters"]?.toString() ?? "",
-      );
+  allowedRadius = int.tryParse(
+        storeSettings?["allowed_radius"]?.toString() ?? "100",
+      ) ??
+      100;
 
-      gpsAccuracy = double.tryParse(
-        result["gps_accuracy"]?.toString() ?? "",
-      );
-    });
+  distanceMeters = double.tryParse(
+    result["distance_meters"]?.toString() ?? "",
+  );
+
+  gpsAccuracy = double.tryParse(
+    result["gps_accuracy"]?.toString() ?? "",
+  );
+});
   }
 
 Future<void> openScanner() async {
