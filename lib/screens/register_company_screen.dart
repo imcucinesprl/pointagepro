@@ -79,11 +79,11 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
     try {
       final response = await http.post(
         Uri.parse("https://taskflowapp.eu/auth/register_company.php"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "company_name": companyName,
+          "company_email": email,
+          "company_phone": phoneController.text.trim(),
           "vat_number": vatController.text.trim(),
           "address": addressController.text.trim(),
           "firstname": firstname,
@@ -91,6 +91,7 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
           "email": email,
           "phone": phoneController.text.trim(),
           "password": password,
+          "app": "pointagepro",
         }),
       );
 
@@ -107,8 +108,9 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
           context: context,
           builder: (_) => CupertinoAlertDialog(
             title: const Text("Entreprise créée"),
-            content: const Text(
-              "Votre entreprise a bien été créée. Vous pouvez maintenant vous connecter.",
+            content: Text(
+              data["message"] ??
+                  "Votre entreprise a bien été créée. Veuillez vérifier vos emails et cliquer sur le lien d'activation avant de vous connecter.",
             ),
             actions: [
               CupertinoDialogAction(
@@ -123,8 +125,7 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
         );
       } else {
         setState(() {
-          errorMessage =
-              data["message"] ?? "Impossible de créer l'entreprise.";
+          errorMessage = data["message"] ?? "Impossible de créer l'entreprise.";
         });
       }
     } catch (_) {
@@ -412,10 +413,7 @@ class _GlassCard extends StatelessWidget {
 }
 
 class _BlurCircle extends StatelessWidget {
-  const _BlurCircle({
-    required this.size,
-    required this.color,
-  });
+  const _BlurCircle({required this.size, required this.color});
 
   final double size;
   final Color color;

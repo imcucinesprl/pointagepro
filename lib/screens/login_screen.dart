@@ -50,10 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
       errorMessage = null;
     });
 
-    final success = await AuthService.login(
-      email: email,
-      password: password,
-    );
+    final success = await AuthService.login(email: email, password: password);
 
     if (!mounted) return;
 
@@ -61,16 +58,17 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = false;
     });
 
-if (success) {
-  TextInput.finishAutofillContext(shouldSave: true);
+    if (success) {
+      TextInput.finishAutofillContext(shouldSave: true);
 
-  Navigator.pushReplacement(
-    context,
-    CupertinoPageRoute(builder: (_) => const MainTabScreen()),
-  );
-} else {
+      Navigator.pushReplacement(
+        context,
+        CupertinoPageRoute(builder: (_) => const MainTabScreen()),
+      );
+    } else {
       setState(() {
-        errorMessage = "Email ou mot de passe incorrect.";
+        errorMessage =
+            AuthService.lastErrorMessage ?? "Email ou mot de passe incorrect.";
       });
     }
   }
@@ -102,7 +100,6 @@ if (success) {
       ),
     );
 
-   
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -121,11 +118,11 @@ if (success) {
   }
 
   void openRegisterCompany() {
-  Navigator.push(
-    context,
-    CupertinoPageRoute(builder: (_) => const RegisterCompanyScreen()),
-  );
-}
+    Navigator.push(
+      context,
+      CupertinoPageRoute(builder: (_) => const RegisterCompanyScreen()),
+    );
+  }
 
   @override
   void dispose() {
@@ -144,26 +141,17 @@ if (success) {
             Positioned(
               top: -120,
               right: -90,
-              child: _BlurCircle(
-                size: 270,
-                color: blue.withOpacity(0.22),
-              ),
+              child: _BlurCircle(size: 270, color: blue.withOpacity(0.22)),
             ),
             Positioned(
               top: 260,
               left: -130,
-              child: _BlurCircle(
-                size: 290,
-                color: purple.withOpacity(0.16),
-              ),
+              child: _BlurCircle(size: 290, color: purple.withOpacity(0.16)),
             ),
             Positioned(
               bottom: -130,
               right: -90,
-              child: _BlurCircle(
-                size: 280,
-                color: green.withOpacity(0.13),
-              ),
+              child: _BlurCircle(size: 280, color: green.withOpacity(0.13)),
             ),
 
             Center(
@@ -202,52 +190,50 @@ if (success) {
 
                         const SizedBox(height: 24),
 
- AutofillGroup(
-  child: Column(
-    children: [
-      _GlassTextField(
-        controller: emailController,
-        placeholder: "Email",
-        icon: CupertinoIcons.mail_solid,
-        keyboardType: TextInputType.emailAddress,
-        autofillHints: const [
-          AutofillHints.username,
-          AutofillHints.email,
-        ],
-        textInputAction: TextInputAction.next,
-      ),
+                        AutofillGroup(
+                          child: Column(
+                            children: [
+                              _GlassTextField(
+                                controller: emailController,
+                                placeholder: "Email",
+                                icon: CupertinoIcons.mail_solid,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [
+                                  AutofillHints.username,
+                                  AutofillHints.email,
+                                ],
+                                textInputAction: TextInputAction.next,
+                              ),
 
-      const SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
-      _GlassTextField(
-        controller: passwordController,
-        placeholder: "Mot de passe",
-        icon: CupertinoIcons.lock_fill,
-        obscureText: obscurePassword,
-        autofillHints: const [
-          AutofillHints.password,
-        ],
-        textInputAction: TextInputAction.done,
-        suffix: CupertinoButton(
-          padding: EdgeInsets.zero,
-          minSize: 34,
-          onPressed: () {
-            setState(() {
-              obscurePassword = !obscurePassword;
-            });
-          },
-          child: Icon(
-            obscurePassword
-                ? CupertinoIcons.eye_fill
-                : CupertinoIcons.eye_slash_fill,
-            color: subtitle,
-            size: 22,
-          ),
-        ),
-      ),
-    ],
-  ),
-),
+                              _GlassTextField(
+                                controller: passwordController,
+                                placeholder: "Mot de passe",
+                                icon: CupertinoIcons.lock_fill,
+                                obscureText: obscurePassword,
+                                autofillHints: const [AutofillHints.password],
+                                textInputAction: TextInputAction.done,
+                                suffix: CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  minSize: 34,
+                                  onPressed: () {
+                                    setState(() {
+                                      obscurePassword = !obscurePassword;
+                                    });
+                                  },
+                                  child: Icon(
+                                    obscurePassword
+                                        ? CupertinoIcons.eye_fill
+                                        : CupertinoIcons.eye_slash_fill,
+                                    color: subtitle,
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
                         const SizedBox(height: 10),
 
@@ -330,7 +316,8 @@ if (success) {
                                           MainAxisAlignment.center,
                                       children: [
                                         Icon(
-                                          CupertinoIcons.arrow_right_circle_fill,
+                                          CupertinoIcons
+                                              .arrow_right_circle_fill,
                                           color: Colors.white,
                                           size: 24,
                                         ),
@@ -354,57 +341,57 @@ if (success) {
 
                   const SizedBox(height: 20),
 
-_GlassCard(
-  padding: const EdgeInsets.all(18),
-  child: Column(
-    children: [
-      const Text(
-        "Nouvelle entreprise ?",
-        style: TextStyle(
-          color: _LoginScreenState.subtitle,
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      const SizedBox(height: 12),
-      CupertinoButton(
-        padding: EdgeInsets.zero,
-        onPressed: isLoading ? null : openRegisterCompany,
-        child: Container(
-          height: 54,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: _LoginScreenState.blue.withOpacity(0.25),
-            ),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                CupertinoIcons.building_2_fill,
-                color: _LoginScreenState.blue,
-                size: 22,
-              ),
-              SizedBox(width: 10),
-              Text(
-                "Créer une entreprise",
-                style: TextStyle(
-                  color: _LoginScreenState.blue,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-  ),
-),
+                  _GlassCard(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Nouvelle entreprise ?",
+                          style: TextStyle(
+                            color: _LoginScreenState.subtitle,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: isLoading ? null : openRegisterCompany,
+                          child: Container(
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: _LoginScreenState.blue.withOpacity(0.25),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.building_2_fill,
+                                  color: _LoginScreenState.blue,
+                                  size: 22,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Créer une entreprise",
+                                  style: TextStyle(
+                                    color: _LoginScreenState.blue,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   const Text(
                     "PointagePro • Pointage & présence équipe",
@@ -435,10 +422,7 @@ class _LogoHeader extends StatelessWidget {
           width: 88,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [
-                _LoginScreenState.blue,
-                _LoginScreenState.purple,
-              ],
+              colors: [_LoginScreenState.blue, _LoginScreenState.purple],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -518,24 +502,15 @@ class _GlassTextField extends StatelessWidget {
       ),
       prefix: Padding(
         padding: const EdgeInsets.only(left: 14),
-        child: Icon(
-          icon,
-          color: _LoginScreenState.blue,
-          size: 22,
-        ),
+        child: Icon(icon, color: _LoginScreenState.blue, size: 22),
       ),
       suffix: suffix == null
           ? null
-          : Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: suffix,
-            ),
+          : Padding(padding: const EdgeInsets.only(right: 8), child: suffix),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
     );
   }
@@ -561,9 +536,7 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.82),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.65),
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.65)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.055),
@@ -580,10 +553,7 @@ class _GlassCard extends StatelessWidget {
 }
 
 class _BlurCircle extends StatelessWidget {
-  const _BlurCircle({
-    required this.size,
-    required this.color,
-  });
+  const _BlurCircle({required this.size, required this.color});
 
   final double size;
   final Color color;
@@ -595,10 +565,7 @@ class _BlurCircle extends StatelessWidget {
       child: Container(
         height: size,
         width: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }

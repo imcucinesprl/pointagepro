@@ -8,6 +8,7 @@ import 'login_screen.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../core/services/update_service.dart';
 import '../core/services/pointage_service.dart';
+import 'subscription_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -36,95 +37,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String latestVersion = '';
   bool updateAvailable = false;
 
-@override
-void initState() {
-  super.initState();
-  loadSession();
-  loadVersionAndUpdateStatus();
-}
+  @override
+  void initState() {
+    super.initState();
+    loadSession();
+    loadVersionAndUpdateStatus();
+  }
 
-Future<void> loadVersionAndUpdateStatus() async {
-  final info = await PackageInfo.fromPlatform();
-  final updateData = await UpdateService.check();
+  Future<void> loadVersionAndUpdateStatus() async {
+    final info = await PackageInfo.fromPlatform();
+    final updateData = await UpdateService.check();
 
-  final current = info.version;
-  final build = info.buildNumber;
-  final latest = updateData?['latest_version']?.toString() ?? '';
-
-  if (!mounted) return;
-
-  setState(() {
-    appVersion = current;
-    buildNumber = build;
-    latestVersion = latest;
-    updateAvailable = latest.isNotEmpty &&
-        UpdateService.isVersionLower(current, latest);
-  });
-}
-
-Future<void> loadSession() async {
-  final result = await PointageService.me();
-
-  if (result["success"] == true) {
-    final apiCompany = result["company"] as Map<String, dynamic>?;
-    final apiUser = result["user"] as Map<String, dynamic>?;
-
-    final newCompanyId =
-        int.tryParse(apiCompany?["id"]?.toString() ?? "") ?? 0;
-    final newCompanyName =
-        apiCompany?["name"]?.toString() ?? '';
-
-    final newFirstName =
-        apiUser?["firstname"]?.toString() ?? '';
-    final newLastName =
-        apiUser?["lastname"]?.toString() ?? '';
-    final newRole =
-        apiUser?["role"]?.toString() ?? '';
-
-    if (newCompanyId > 0) {
-      await SessionService.saveCompanyId(newCompanyId);
-    }
-
-    if (newCompanyName.isNotEmpty) {
-      await SessionService.saveCompanyName(newCompanyName);
-    }
-
-    if (newFirstName.isNotEmpty) {
-      await SessionService.saveFirstName(newFirstName);
-    }
-
-    if (newLastName.isNotEmpty) {
-      await SessionService.saveLastName(newLastName);
-    }
+    final current = info.version;
+    final build = info.buildNumber;
+    final latest = updateData?['latest_version']?.toString() ?? '';
 
     if (!mounted) return;
 
     setState(() {
-      firstName = newFirstName;
-      lastName = newLastName;
-      companyName = newCompanyName;
-      role = newRole;
-      managerName = newFirstName;
+      appVersion = current;
+      buildNumber = build;
+      latestVersion = latest;
+      updateAvailable =
+          latest.isNotEmpty && UpdateService.isVersionLower(current, latest);
     });
-
-    return;
   }
 
-  final f = await SessionService.getFirstName();
-  final l = await SessionService.getLastName();
-  final c = await SessionService.getCompanyName();
-  final r = await SessionService.getRole();
+  Future<void> loadSession() async {
+    final result = await PointageService.me();
 
-  if (!mounted) return;
+    if (result["success"] == true) {
+      final apiCompany = result["company"] as Map<String, dynamic>?;
+      final apiUser = result["user"] as Map<String, dynamic>?;
 
-  setState(() {
-    firstName = f;
-    lastName = l;
-    companyName = c;
-    role = r ?? '';
-    managerName = f;
-  });
-}
+      final newCompanyId =
+          int.tryParse(apiCompany?["id"]?.toString() ?? "") ?? 0;
+      final newCompanyName = apiCompany?["name"]?.toString() ?? '';
+
+      final newFirstName = apiUser?["firstname"]?.toString() ?? '';
+      final newLastName = apiUser?["lastname"]?.toString() ?? '';
+      final newRole = apiUser?["role"]?.toString() ?? '';
+
+      if (newCompanyId > 0) {
+        await SessionService.saveCompanyId(newCompanyId);
+      }
+
+      if (newCompanyName.isNotEmpty) {
+        await SessionService.saveCompanyName(newCompanyName);
+      }
+
+      if (newFirstName.isNotEmpty) {
+        await SessionService.saveFirstName(newFirstName);
+      }
+
+      if (newLastName.isNotEmpty) {
+        await SessionService.saveLastName(newLastName);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        firstName = newFirstName;
+        lastName = newLastName;
+        companyName = newCompanyName;
+        role = newRole;
+        managerName = newFirstName;
+      });
+
+      return;
+    }
+
+    final f = await SessionService.getFirstName();
+    final l = await SessionService.getLastName();
+    final c = await SessionService.getCompanyName();
+    final r = await SessionService.getRole();
+
+    if (!mounted) return;
+
+    setState(() {
+      firstName = f;
+      lastName = l;
+      companyName = c;
+      role = r ?? '';
+      managerName = f;
+    });
+  }
 
   String get roleLabel {
     return switch (role) {
@@ -181,10 +178,7 @@ Future<void> loadSession() async {
       navigationBar: const CupertinoNavigationBar(
         backgroundColor: Color(0xCCF3F6FB),
         border: null,
-        middle: Text(
-          'Profil',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
+        middle: Text('Profil', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       child: SafeArea(
         child: Stack(
@@ -192,26 +186,17 @@ Future<void> loadSession() async {
             Positioned(
               top: -120,
               right: -80,
-              child: _BlurCircle(
-                size: 260,
-                color: blue.withOpacity(0.20),
-              ),
+              child: _BlurCircle(size: 260, color: blue.withOpacity(0.20)),
             ),
             Positioned(
               top: 220,
               left: -120,
-              child: _BlurCircle(
-                size: 280,
-                color: purple.withOpacity(0.16),
-              ),
+              child: _BlurCircle(size: 280, color: purple.withOpacity(0.16)),
             ),
             Positioned(
               bottom: -130,
               right: -90,
-              child: _BlurCircle(
-                size: 280,
-                color: green.withOpacity(0.13),
-              ),
+              child: _BlurCircle(size: 280, color: green.withOpacity(0.13)),
             ),
             ListView(
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 34),
@@ -272,53 +257,107 @@ Future<void> loadSession() async {
                   ),
                 ),
 
-const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-_GlassCard(
-  child: Row(
-    children: [
-      _IconBubble(
-        icon: updateAvailable
-            ? CupertinoIcons.exclamationmark_triangle_fill
-            : CupertinoIcons.checkmark_seal_fill,
-        color: updateAvailable ? orange : green,
-      ),
-      const SizedBox(width: 14),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Version actuelle',
-              style: TextStyle(
-                color: text,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'v$appVersion ($buildNumber)',
-              style: const TextStyle(
-                color: subtitle,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-      Text(
-        updateAvailable ? 'Mise à jour' : 'À jour',
-        style: TextStyle(
-          color: updateAvailable ? orange : green,
-          fontSize: 15,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    ],
-  ),
-),
+                _GlassCard(
+                  child: Row(
+                    children: [
+                      _IconBubble(
+                        icon: updateAvailable
+                            ? CupertinoIcons.exclamationmark_triangle_fill
+                            : CupertinoIcons.checkmark_seal_fill,
+                        color: updateAvailable ? orange : green,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Version actuelle',
+                              style: TextStyle(
+                                color: text,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'v$appVersion ($buildNumber)',
+                              style: const TextStyle(
+                                color: subtitle,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        updateAvailable ? 'Mise à jour' : 'À jour',
+                        style: TextStyle(
+                          color: updateAvailable ? orange : green,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (_) => const SubscriptionScreen(),
+                      ),
+                    );
+                  },
+                  child: _GlassCard(
+                    child: Row(
+                      children: [
+                        const _IconBubble(
+                          icon: CupertinoIcons.star_fill,
+                          color: orange,
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Abonnement PointagePro',
+                                style: TextStyle(
+                                  color: text,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Voir le plan, l’essai et la facturation',
+                                style: TextStyle(
+                                  color: subtitle,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          CupertinoIcons.chevron_right,
+                          color: subtitle,
+                          size: 22,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
                 const SizedBox(height: 18),
                 CupertinoButton(
@@ -577,9 +616,7 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.82),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.65),
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.65)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.055),
@@ -596,10 +633,7 @@ class _GlassCard extends StatelessWidget {
 }
 
 class _IconBubble extends StatelessWidget {
-  const _IconBubble({
-    required this.icon,
-    required this.color,
-  });
+  const _IconBubble({required this.icon, required this.color});
 
   final IconData icon;
   final Color color;
@@ -645,10 +679,7 @@ class _StatusPill extends StatelessWidget {
           Container(
             width: 9,
             height: 9,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 7),
           Text(
@@ -672,19 +703,13 @@ class _SoftDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Container(
-        height: 1,
-        color: const Color(0xFFE5E7EB),
-      ),
+      child: Container(height: 1, color: const Color(0xFFE5E7EB)),
     );
   }
 }
 
 class _BlurCircle extends StatelessWidget {
-  const _BlurCircle({
-    required this.size,
-    required this.color,
-  });
+  const _BlurCircle({required this.size, required this.color});
 
   final double size;
   final Color color;
@@ -696,10 +721,7 @@ class _BlurCircle extends StatelessWidget {
       child: Container(
         height: size,
         width: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }

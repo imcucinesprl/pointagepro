@@ -5,29 +5,27 @@ import 'api_service.dart';
 import 'session_service.dart';
 
 class AuthService {
+  static String? lastErrorMessage;
+
   static Future<bool> login({
     required String email,
     required String password,
   }) async {
     try {
+      lastErrorMessage = null;
+
       final response = await http.post(
         ApiService.auth("login.php"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "password": password}),
       );
 
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
       final data = jsonDecode(response.body);
+
+      lastErrorMessage = data["message"]?.toString();
 
       if (response.statusCode == 200 && data["success"] == true) {
         final user = data["user"];
-
-        print("LOGIN USER: $user");
-        print("USER ID RAW: ${user["id"]}");
-        print("COMPANY ID RAW: ${user["company_id"]}");
-        print("ROLE RAW: ${user["role"]}");
 
         final userId = int.tryParse(user["id"].toString());
         final companyId = int.tryParse(user["company_id"].toString());
@@ -36,7 +34,7 @@ class AuthService {
             userId <= 0 ||
             companyId == null ||
             companyId <= 0) {
-          print("SESSION ERROR: userId ou companyId invalide");
+          lastErrorMessage = "Session invalide. Veuillez contacter le support.";
           return false;
         }
 
@@ -56,14 +54,13 @@ class AuthService {
         return true;
       }
 
+      lastErrorMessage ??= "Email ou mot de passe incorrect.";
       return false;
     } catch (e) {
-      print("Erreur login: $e");
+      lastErrorMessage = "Erreur de connexion au serveur.";
       return false;
     }
   }
-
-  static String? lastErrorMessage;
 
   static Future<bool> forgotPassword({required String email}) async {
     try {
@@ -79,7 +76,7 @@ class AuthService {
 
       return data["success"] == true;
     } catch (e) {
-      lastErrorMessage = e.toString();
+      lastErrorMessage = "Erreur de connexion au serveur.";
       return false;
     }
   }
