@@ -9,6 +9,13 @@ class SessionService {
   static const _lastNameKey = 'last_name';
   static const _companyNameKey = 'company_name';
 
+  // Abonnement
+  static const _companyStatusKey = 'company_status';
+  static const _subscriptionStatusKey = 'subscription_status';
+  static const _planKey = 'plan';
+  static const _trialEndsAtKey = 'trial_ends_at';
+  static const _subscriptionEndsAtKey = 'subscription_ends_at';
+
   static Future<void> saveSession({
     required int userId,
     required int companyId,
@@ -17,6 +24,13 @@ class SessionService {
     String? firstName,
     String? lastName,
     String? companyName,
+
+    // Abonnement
+    String? companyStatus,
+    String? subscriptionStatus,
+    String? plan,
+    String? trialEndsAt,
+    String? subscriptionEndsAt,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -28,6 +42,12 @@ class SessionService {
     await prefs.setString(_firstNameKey, firstName ?? '');
     await prefs.setString(_lastNameKey, lastName ?? '');
     await prefs.setString(_companyNameKey, companyName ?? '');
+
+    await prefs.setString(_companyStatusKey, companyStatus ?? '');
+    await prefs.setString(_subscriptionStatusKey, subscriptionStatus ?? '');
+    await prefs.setString(_planKey, plan ?? '');
+    await prefs.setString(_trialEndsAtKey, trialEndsAt ?? '');
+    await prefs.setString(_subscriptionEndsAtKey, subscriptionEndsAt ?? '');
   }
 
   static Future<String> getFirstName() async {
@@ -65,25 +85,68 @@ class SessionService {
     return prefs.getString(_tokenKey);
   }
 
+  static Future<String> getCompanyStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_companyStatusKey) ?? '';
+  }
+
+  static Future<String> getSubscriptionStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_subscriptionStatusKey) ?? '';
+  }
+
+  static Future<String> getPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_planKey) ?? '';
+  }
+
+  static Future<String> getTrialEndsAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_trialEndsAtKey) ?? '';
+  }
+
+  static Future<String> getSubscriptionEndsAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_subscriptionEndsAtKey) ?? '';
+  }
+
+static Future<bool> hasActiveSubscription() async {
+  final role = await getRole();
+  final companyStatus = await getCompanyStatus();
+  final subscriptionStatus = await getSubscriptionStatus();
+
+  if (role == 'platform_admin' || role == 'super_admin') {
+    return true;
+  }
+
+  if (companyStatus == 'inactive' || companyStatus == 'blocked') {
+    return false;
+  }
+
+  return subscriptionStatus == 'active' ||
+      subscriptionStatus == 'trialing' ||
+      subscriptionStatus == 'trial';
+}
+
   static Future<void> saveCompanyId(int companyId) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setInt(_companyIdKey, companyId);
-}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_companyIdKey, companyId);
+  }
 
-static Future<void> saveCompanyName(String companyName) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_companyNameKey, companyName);
-}
+  static Future<void> saveCompanyName(String companyName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_companyNameKey, companyName);
+  }
 
-static Future<void> saveFirstName(String firstName) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_firstNameKey, firstName);
-}
+  static Future<void> saveFirstName(String firstName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_firstNameKey, firstName);
+  }
 
-static Future<void> saveLastName(String lastName) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_lastNameKey, lastName);
-}
+  static Future<void> saveLastName(String lastName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastNameKey, lastName);
+  }
 
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
@@ -110,5 +173,14 @@ static Future<void> saveLastName(String lastName) async {
     await prefs.remove(_firstNameKey);
     await prefs.remove(_lastNameKey);
     await prefs.remove(_companyNameKey);
+
+    await prefs.remove(_companyStatusKey);
+    await prefs.remove(_subscriptionStatusKey);
+    await prefs.remove(_planKey);
+    await prefs.remove(_trialEndsAtKey);
+    await prefs.remove(_subscriptionEndsAtKey);
   }
+  static Future<void> clearSession() async {
+  await logout();
 }
+} 

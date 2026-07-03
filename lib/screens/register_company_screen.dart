@@ -95,6 +95,9 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
         }),
       );
 
+print("STATUS: ${response.statusCode}");
+print("BODY: ${response.body}");
+
       final data = jsonDecode(response.body);
 
       if (!mounted) return;
@@ -128,12 +131,12 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
           errorMessage = data["message"] ?? "Impossible de créer l'entreprise.";
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
         isLoading = false;
-        errorMessage = "Erreur de connexion au serveur.";
+        errorMessage = "Erreur de connexion au serveur : $e";
       });
     }
   }

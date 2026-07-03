@@ -1,0 +1,125 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "flutterframework",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework",
+          "name" : "FlutterFramework"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework"
+        },
+        "subpath" : "flutterframework"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "geolocator_apple-2.3.14",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/geolocator_apple-2.3.14",
+          "name" : "geolocator_apple"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/geolocator_apple-2.3.14"
+        },
+        "subpath" : "geolocator_apple-2.3.14"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "mobile_scanner-7.2.0",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/mobile_scanner-7.2.0",
+          "name" : "mobile_scanner"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/mobile_scanner-7.2.0"
+        },
+        "subpath" : "mobile_scanner-7.2.0"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "package_info_plus-8.3.1",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/package_info_plus-8.3.1",
+          "name" : "package_info_plus"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/package_info_plus-8.3.1"
+        },
+        "subpath" : "package_info_plus-8.3.1"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "shared_preferences_foundation-2.5.6",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/shared_preferences_foundation-2.5.6",
+          "name" : "shared_preferences_foundation"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/shared_preferences_foundation-2.5.6"
+        },
+        "subpath" : "shared_preferences_foundation-2.5.6"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "url_launcher_ios-6.4.1",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/url_launcher_ios-6.4.1",
+          "name" : "url_launcher_ios"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/url_launcher_ios-6.4.1"
+        },
+        "subpath" : "url_launcher_ios-6.4.1"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "wakelock_plus-1.3.3",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/wakelock_plus-1.3.3",
+          "name" : "wakelock_plus"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/wakelock_plus-1.3.3"
+        },
+        "subpath" : "wakelock_plus-1.3.3"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "webview_flutter_wkwebview-3.25.1",
+          "kind" : "fileSystem",
+          "location" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/webview_flutter_wkwebview-3.25.1",
+          "name" : "webview_flutter_wkwebview"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/izsbureau/Applications/pointagepro/ios/Flutter/ephemeral/Packages/.packages/webview_flutter_wkwebview-3.25.1"
+        },
+        "subpath" : "webview_flutter_wkwebview-3.25.1"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

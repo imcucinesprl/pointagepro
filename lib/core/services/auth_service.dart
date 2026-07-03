@@ -17,7 +17,10 @@ class AuthService {
       final response = await http.post(
         ApiService.auth("login.php"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+        }),
       );
 
       final data = jsonDecode(response.body);
@@ -49,6 +52,13 @@ class AuthService {
           lastName: user["lastname"]?.toString(),
           companyName:
               company?["name"]?.toString() ?? user["company_name"]?.toString(),
+
+          // Abonnement PointagePro
+          companyStatus: company?["status"]?.toString(),
+          subscriptionStatus: company?["subscription_status"]?.toString(),
+          plan: company?["plan"]?.toString(),
+          trialEndsAt: company?["trial_ends_at"]?.toString(),
+          subscriptionEndsAt: company?["subscription_ends_at"]?.toString(),
         );
 
         return true;

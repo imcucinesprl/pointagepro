@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/services/pointage_service.dart';
 import 'package:flutter/services.dart';
+import '../../core/services/session_service.dart';
 
 class ClockScanScreen extends StatefulWidget {
   const ClockScanScreen({super.key});
@@ -23,6 +24,29 @@ class _ClockScanScreenState extends State<ClockScanScreen> {
 Future<void> handleQrCode(String value) async {
   if (isProcessing) return;
 
+  final hasSubscription = await SessionService.hasActiveSubscription();
+
+  if (!hasSubscription) {
+    if (!mounted) return;
+
+    await showCupertinoDialog(
+      context: context,
+      builder: (_) => const CupertinoAlertDialog(
+        title: Text("Abonnement expiré"),
+        content: Text(
+          "L'abonnement de votre entreprise est expiré.\n\nLe pointage est temporairement désactivé. Veuillez contacter votre responsable.",
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+
+    return;
+  }
+  
   setState(() {
     isProcessing = true;
   });

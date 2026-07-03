@@ -30,10 +30,14 @@ class PointageProApp extends StatelessWidget {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<bool> _checkLoginState() async {
+    return SessionService.isLoggedIn();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: SessionService.isLoggedIn(),
+      future: _checkLoginState(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const CupertinoPageScaffold(

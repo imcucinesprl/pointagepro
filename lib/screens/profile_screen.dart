@@ -307,57 +307,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 18),
 
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (_) => const SubscriptionScreen(),
-                      ),
-                    );
-                  },
-                  child: _GlassCard(
-                    child: Row(
-                      children: [
-                        const _IconBubble(
-                          icon: CupertinoIcons.star_fill,
-                          color: orange,
-                        ),
-                        const SizedBox(width: 14),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Abonnement PointagePro',
-                                style: TextStyle(
-                                  color: text,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Voir le plan, l’essai et la facturation',
-                                style: TextStyle(
-                                  color: subtitle,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          CupertinoIcons.chevron_right,
-                          color: subtitle,
-                          size: 22,
-                        ),
-                      ],
-                    ),
+if (role == 'super_admin' || role == 'platform_admin') ...[
+  const SizedBox(height: 18),
+
+  CupertinoButton(
+    padding: EdgeInsets.zero,
+    onPressed: () {
+      Navigator.push(
+        context,
+        CupertinoPageRoute(
+          builder: (_) => const SubscriptionScreen(),
+        ),
+      );
+    },
+    child: _GlassCard(
+      child: Row(
+        children: [
+          const _IconBubble(
+            icon: CupertinoIcons.creditcard_fill,
+            color: orange,
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Abonnement PointagePro',
+                  style: TextStyle(
+                    color: text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
+                SizedBox(height: 4),
+                Text(
+                  'Gérer votre abonnement et votre facturation',
+                  style: TextStyle(
+                    color: subtitle,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            CupertinoIcons.chevron_right,
+            color: subtitle,
+            size: 22,
+          ),
+        ],
+      ),
+    ),
+  ),
+],
 
                 const SizedBox(height: 18),
                 CupertinoButton(

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../models/planning_comparison.dart';
+import '../../models/planning_comparison.dart';
 
 class ManagerPlanningService {
   static const String baseUrl = "https://taskflowapp.eu/pointagepro";

@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
-class FullScreenQrScreen extends StatelessWidget {
+class FullScreenQrScreen extends StatefulWidget {
   const FullScreenQrScreen({
     super.key,
     required this.qrUrl,
@@ -11,6 +12,32 @@ class FullScreenQrScreen extends StatelessWidget {
 
   final String qrUrl;
   final String companyName;
+
+  @override
+  State<FullScreenQrScreen> createState() => _FullScreenQrScreenState();
+}
+
+class _FullScreenQrScreenState extends State<FullScreenQrScreen> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Empêche le téléphone de se mettre en veille
+    WakelockPlus.enable();
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse(widget.qrUrl));
+  }
+
+  @override
+  void dispose() {
+    // Réactive la mise en veille normale
+    WakelockPlus.disable();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +58,7 @@ class FullScreenQrScreen extends StatelessWidget {
                     height: isLandscape
                         ? MediaQuery.of(context).size.height * 0.95
                         : MediaQuery.of(context).size.height,
-                    child: WebViewWidget(
-                      controller: WebViewController()
-                        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-                        ..loadRequest(Uri.parse(qrUrl)),
-                    ),
+                    child: WebViewWidget(controller: _controller),
                   ),
                 ),
 
