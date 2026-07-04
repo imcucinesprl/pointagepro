@@ -28,11 +28,7 @@ class _EmployeePlanningScreenState extends State<EmployeePlanningScreen> {
   final String baseUrl = "https://taskflowapp.eu/pointagepro";
 
   static DateTime _startOfWeek(DateTime date) {
-    return DateTime(
-      date.year,
-      date.month,
-      date.day - (date.weekday - 1),
-    );
+    return DateTime(date.year, date.month, date.day - (date.weekday - 1));
   }
 
   String get weekStartString {
@@ -64,13 +60,13 @@ class _EmployeePlanningScreenState extends State<EmployeePlanningScreen> {
       );
 
       print("EMPLOYEE PLANNING STATUS: ${response.statusCode}");
-print("EMPLOYEE PLANNING BODY: ${response.body}");
+      print("EMPLOYEE PLANNING BODY: ${response.body}");
 
-if (!response.body.trim().startsWith("{")) {
-  throw Exception("Réponse serveur non JSON : ${response.body}");
-}
+      if (!response.body.trim().startsWith("{")) {
+        throw Exception("Réponse serveur non JSON : ${response.body}");
+      }
 
-final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
       if (!mounted) return;
 
@@ -121,9 +117,7 @@ final data = jsonDecode(response.body);
           child: const Icon(CupertinoIcons.refresh),
         ),
       ),
-      child: SafeArea(
-        child: buildBody(),
-      ),
+      child: SafeArea(child: buildBody()),
     );
   }
 
@@ -162,10 +156,7 @@ final data = jsonDecode(response.body);
         const SizedBox(height: 6),
         const Text(
           "Tes horaires prévus pour la semaine.",
-          style: TextStyle(
-            fontSize: 17,
-            color: AppColors.subtitle,
-          ),
+          style: TextStyle(fontSize: 17, color: AppColors.subtitle),
         ),
         const SizedBox(height: 20),
         _WeekSelector(
@@ -242,9 +233,7 @@ class _WeekSelector extends StatelessWidget {
 class _PlanningDayCard extends StatelessWidget {
   final Map day;
 
-  const _PlanningDayCard({
-    required this.day,
-  });
+  const _PlanningDayCard({required this.day});
 
   String cleanTime(dynamic value) {
     if (value == null) return "";
@@ -260,102 +249,163 @@ class _PlanningDayCard extends StatelessWidget {
   }
 
   String statusLabel(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "present":
         return "Présent";
+
+      case "morning":
+        return "Matin";
+
+      case "evening":
+        return "Soir";
+
+      case "repos":
+        return "Repos";
+
       case "conge":
         return "Congé";
+
       case "malade":
         return "Maladie";
+
       case "vacances":
         return "Vacances";
+
       case "bakery-time":
         return "Boulangerie";
+
       case "caisse-time":
         return "Caisse";
+
       case "cremerie":
         return "Crémerie";
+
       case "boucherie":
         return "Boucherie";
+
       case "fruits-legumes":
         return "Fruits & légumes";
+
       case "recup":
         return "Récup";
+
       case "jf":
         return "Jour férié";
+
       case "ai":
         return "Absence injustifiée";
+
       default:
         return status.isEmpty ? "Repos" : status;
     }
   }
 
   Color statusColor(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
+      case "present":
+        return CupertinoColors.systemGreen;
+
+      case "morning":
+        return CupertinoColors.systemOrange;
+
+      case "evening":
+        return CupertinoColors.systemIndigo;
+
+      case "repos":
+        return CupertinoColors.systemGrey;
+
       case "bakery-time":
         return CupertinoColors.systemOrange;
+
       case "caisse-time":
         return CupertinoColors.systemTeal;
+
       case "boucherie":
         return CupertinoColors.systemRed;
+
       case "fruits-legumes":
         return CupertinoColors.systemGreen;
+
       case "cremerie":
         return CupertinoColors.systemIndigo;
+
       case "conge":
       case "vacances":
       case "jf":
         return CupertinoColors.systemBlue;
+
       case "malade":
       case "ai":
         return CupertinoColors.systemRed;
+
       case "recup":
         return CupertinoColors.systemPurple;
+
       default:
         return AppColors.subtitle;
     }
   }
 
   IconData statusIcon(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
+      case "present":
+        return CupertinoIcons.checkmark_circle_fill;
+
+      case "morning":
+        return CupertinoIcons.sunrise_fill;
+
+      case "evening":
+        return CupertinoIcons.moon_stars_fill;
+
+      case "repos":
+        return CupertinoIcons.bed_double_fill;
+
       case "bakery-time":
         return CupertinoIcons.cube_box_fill;
+
       case "caisse-time":
         return CupertinoIcons.creditcard_fill;
+
       case "boucherie":
         return CupertinoIcons.scissors;
+
       case "fruits-legumes":
         return CupertinoIcons.leaf_arrow_circlepath;
+
       case "cremerie":
         return CupertinoIcons.drop_fill;
+
       case "conge":
       case "vacances":
         return CupertinoIcons.sun_max_fill;
+
       case "malade":
         return CupertinoIcons.bandage_fill;
+
       case "jf":
         return CupertinoIcons.flag_fill;
+
       case "recup":
         return CupertinoIcons.arrow_counterclockwise;
+
       case "ai":
         return CupertinoIcons.exclamationmark_triangle_fill;
+
       default:
-        return CupertinoIcons.moon_fill;
+        return CupertinoIcons.question_circle_fill;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final status = day["status"]?.toString() ?? "";
+    final status = (day["status"]?.toString() ?? "").toLowerCase();
     final start = cleanTime(day["start_time"]);
     final end = cleanTime(day["end_time"]);
     final color = statusColor(status);
 
     final hasHours = start.isNotEmpty && end.isNotEmpty;
 
-    final timeText = hasHours
-        ? "$start → $end"
-        : statusLabel(status);
+    final timeText = hasHours ? "$start → $end" : statusLabel(status);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -381,11 +431,7 @@ class _PlanningDayCard extends StatelessWidget {
               color: color.withOpacity(0.14),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              statusIcon(status),
-              color: color,
-              size: 26,
-            ),
+            child: Icon(statusIcon(status), color: color, size: 26),
           ),
           const SizedBox(width: 14),
           Expanded(
