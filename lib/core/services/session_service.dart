@@ -110,23 +110,24 @@ class SessionService {
     return prefs.getString(_subscriptionEndsAtKey) ?? '';
   }
 
-static Future<bool> hasActiveSubscription() async {
-  final role = await getRole();
-  final companyStatus = await getCompanyStatus();
-  final subscriptionStatus = await getSubscriptionStatus();
+  static Future<bool> hasActiveSubscription() async {
+    final role = await getRole();
 
-  if (role == 'platform_admin' || role == 'super_admin') {
-    return true;
+    if (role == 'employee') {
+      return true;
+    }
+
+    final companyStatus = await getCompanyStatus();
+    final subscriptionStatus = await getSubscriptionStatus();
+
+    if (companyStatus == 'inactive' || companyStatus == 'blocked') {
+      return false;
+    }
+
+    return subscriptionStatus == 'active' ||
+        subscriptionStatus == 'trialing' ||
+        subscriptionStatus == 'trial';
   }
-
-  if (companyStatus == 'inactive' || companyStatus == 'blocked') {
-    return false;
-  }
-
-  return subscriptionStatus == 'active' ||
-      subscriptionStatus == 'trialing' ||
-      subscriptionStatus == 'trial';
-}
 
   static Future<void> saveCompanyId(int companyId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -180,7 +181,8 @@ static Future<bool> hasActiveSubscription() async {
     await prefs.remove(_trialEndsAtKey);
     await prefs.remove(_subscriptionEndsAtKey);
   }
+
   static Future<void> clearSession() async {
-  await logout();
+    await logout();
+  }
 }
-} 

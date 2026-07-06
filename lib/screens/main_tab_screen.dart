@@ -10,6 +10,7 @@ import 'employee/employee_planning_screen.dart';
 import 'manager/manager_dashboard_screen.dart';
 import 'profile_screen.dart';
 import 'admin/qr_code_screen.dart';
+import '../widgets/subscription_warning_dialog.dart';
 
 class MainTabScreen extends StatefulWidget {
   const MainTabScreen({super.key});
@@ -23,6 +24,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
   int? companyId;
   int? userId;
   bool isLoading = true;
+  bool _subscriptionPopupShown = false;
 
   bool get canAccessManager {
     return ['admin', 'super_admin', 'platform_admin'].contains(role);
@@ -64,6 +66,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
       userId = savedUserId;
       isLoading = false;
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showSubscriptionWarning();
+    });
   }
 
   Future<void> checkForUpdates() async {
@@ -88,6 +93,24 @@ class _MainTabScreenState extends State<MainTabScreen> {
     if (forceUpdate || updateAvailable) {
       await UpdateDialog.show(context, data, forceUpdate);
     }
+  }
+
+  Future<void> _showSubscriptionWarning() async {
+    if (_subscriptionPopupShown) return;
+
+    final hasSubscription = await SessionService.hasActiveSubscription();
+
+    if (!mounted) return;
+
+    if (hasSubscription) return;
+
+    if (role == 'employee' || role == 'student' || role == 'flexi') {
+      return;
+    }
+
+    _subscriptionPopupShown = true;
+
+    await SubscriptionWarningDialog.show(context);
   }
 
   @override
