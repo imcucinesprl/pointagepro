@@ -17,10 +17,7 @@ class AuthService {
       final response = await http.post(
         ApiService.auth("login.php"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
+        body: jsonEncode({"email": email, "password": password}),
       );
 
       final data = jsonDecode(response.body);
@@ -41,7 +38,7 @@ class AuthService {
           return false;
         }
 
-        final company = data["company"];
+        final company = data["company"] ?? user;
 
         await SessionService.saveSession(
           userId: userId,
@@ -54,11 +51,20 @@ class AuthService {
               company?["name"]?.toString() ?? user["company_name"]?.toString(),
 
           // Abonnement PointagePro
-          companyStatus: company?["status"]?.toString(),
-          subscriptionStatus: company?["subscription_status"]?.toString(),
-          plan: company?["plan"]?.toString(),
-          trialEndsAt: company?["trial_ends_at"]?.toString(),
-          subscriptionEndsAt: company?["subscription_ends_at"]?.toString(),
+          companyStatus:
+              company?["status"]?.toString() ??
+              user["company_status"]?.toString(),
+          subscriptionStatus:
+              company?["subscription_status"]?.toString() ??
+              user["subscription_status"]?.toString(),
+          plan:
+              company?["plan"]?.toString() ?? user["company_plan"]?.toString(),
+          trialEndsAt:
+              company?["trial_ends_at"]?.toString() ??
+              user["trial_ends_at"]?.toString(),
+          subscriptionEndsAt:
+              company?["subscription_ends_at"]?.toString() ??
+              user["subscription_ends_at"]?.toString(),
         );
 
         return true;

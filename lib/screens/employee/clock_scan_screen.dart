@@ -21,90 +21,199 @@ class _ClockScanScreenState extends State<ClockScanScreen> {
 
   bool isProcessing = false;
 
-Future<void> handleQrCode(String value) async {
-  if (isProcessing) return;
+  Future<void> handleQrCode(String value) async {
+    if (isProcessing) return;
 
-  final hasSubscription = await SessionService.hasActiveSubscription();
+    final role = await SessionService.getRole();
+    final hasSubscription = await SessionService.hasActiveSubscription();
 
-  if (!hasSubscription) {
+    if (!hasSubscription && role != 'employee') {
+      if (!mounted) return;
+
+      await showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: "Abonnement",
+        barrierColor: Colors.black.withOpacity(0.35),
+        transitionDuration: const Duration(milliseconds: 260),
+        pageBuilder: (_, __, ___) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 30, 24, 22),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.90),
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.75),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: pointageBlue.withOpacity(0.22),
+                          blurRadius: 35,
+                          offset: const Offset(0, 18),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: 92,
+                          width: 92,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: pointageBlue.withOpacity(0.14),
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.exclamationmark_shield_fill,
+                            color: pointageBlue,
+                            size: 46,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        const Text(
+                          "Abonnement à vérifier",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF111827),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "L'abonnement PointagePro de votre entreprise semble expiré.\n\n"
+                          "Le pointage reste possible depuis l'application, mais l'accès à certaines fonctions web peut être limité.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 16,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Container(
+                            height: 54,
+                            width: double.infinity,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF0A84FF), Color(0xFF0066FF)],
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: pointageBlue.withOpacity(0.25),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              "Continuer le pointage",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        transitionBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutBack,
+              ),
+              child: child,
+            ),
+          );
+        },
+      );
+    }
+
+    setState(() {
+      isProcessing = true;
+    });
+
+    final result = await PointageService.clockWithQr(value);
+
     if (!mounted) return;
 
-    await showCupertinoDialog(
+    final bool success = result["success"] == true;
+    final String message = result["message"]?.toString() ?? "";
+
+    if (success) {
+      HapticFeedback.lightImpact();
+    } else {
+      HapticFeedback.heavyImpact();
+    }
+
+    await showGeneralDialog(
       context: context,
-      builder: (_) => const CupertinoAlertDialog(
-        title: Text("Abonnement expiré"),
-        content: Text(
-          "L'abonnement de votre entreprise est expiré.\n\nLe pointage est temporairement désactivé. Veuillez contacter votre responsable.",
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: Text("OK"),
+      barrierDismissible: false,
+      barrierLabel: "Pointage",
+      barrierColor: Colors.black.withOpacity(0.35),
+      transitionDuration: const Duration(milliseconds: 260),
+      pageBuilder: (_, __, ___) {
+        return _PointageResultDialog(
+          success: success,
+          title: success ? "Pointage enregistré" : "Pointage refusé",
+          message: message.isEmpty
+              ? success
+                    ? "Votre pointage a été enregistré avec succès."
+                    : "Impossible de valider ce pointage."
+              : message,
+        );
+      },
+      transitionBuilder: (_, animation, __, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutBack,
+            ),
+            child: child,
           ),
-        ],
-      ),
+        );
+      },
     );
 
-    return;
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() {
+        isProcessing = false;
+      });
+    }
   }
-  
-  setState(() {
-    isProcessing = true;
-  });
-
-  final result = await PointageService.clockWithQr(value);
-
-  if (!mounted) return;
-
-  final bool success = result["success"] == true;
-  final String message = result["message"]?.toString() ?? "";
-
-  if (success) {
-    HapticFeedback.lightImpact();
-  } else {
-    HapticFeedback.heavyImpact();
-  }
-
-  await showGeneralDialog(
-    context: context,
-    barrierDismissible: false,
-    barrierLabel: "Pointage",
-    barrierColor: Colors.black.withOpacity(0.35),
-    transitionDuration: const Duration(milliseconds: 260),
-    pageBuilder: (_, __, ___) {
-      return _PointageResultDialog(
-        success: success,
-        title: success ? "Pointage enregistré" : "Pointage refusé",
-        message: message.isEmpty
-            ? success
-                ? "Votre pointage a été enregistré avec succès."
-                : "Impossible de valider ce pointage."
-            : message,
-      );
-    },
-    transitionBuilder: (_, animation, __, child) {
-      return FadeTransition(
-        opacity: animation,
-        child: ScaleTransition(
-          scale: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutBack,
-          ),
-          child: child,
-        ),
-      );
-    },
-  );
-
-  if (!mounted) return;
-
-  if (success) {
-    Navigator.of(context).pop(true);
-  } else {
-    setState(() {
-      isProcessing = false;
-    });
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -153,9 +262,7 @@ Future<void> handleQrCode(String value) async {
 
                 const SizedBox(height: 20),
 
-                _ScannerGlassCard(
-                  onDetect: (value) => handleQrCode(value),
-                ),
+                _ScannerGlassCard(onDetect: (value) => handleQrCode(value)),
 
                 const SizedBox(height: 22),
 
@@ -170,9 +277,7 @@ Future<void> handleQrCode(String value) async {
 }
 
 class _HeroGlassCard extends StatelessWidget {
-  const _HeroGlassCard({
-    required this.isProcessing,
-  });
+  const _HeroGlassCard({required this.isProcessing});
 
   final bool isProcessing;
 
@@ -181,10 +286,7 @@ class _HeroGlassCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0A84FF),
-            Color(0xFF7C3AED),
-          ],
+          colors: [Color(0xFF0A84FF), Color(0xFF7C3AED)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -247,9 +349,7 @@ class _HeroGlassCard extends StatelessWidget {
 }
 
 class _ScannerGlassCard extends StatelessWidget {
-  const _ScannerGlassCard({
-    required this.onDetect,
-  });
+  const _ScannerGlassCard({required this.onDetect});
 
   final ValueChanged<String> onDetect;
 
@@ -290,11 +390,7 @@ class _ScannerGlassCard extends StatelessWidget {
               ),
             ),
 
-            const Positioned.fill(
-              child: Center(
-                child: _ScannerFrame(),
-              ),
-            ),
+            const Positioned.fill(child: Center(child: _ScannerFrame())),
           ],
         ),
       ),
@@ -303,9 +399,7 @@ class _ScannerGlassCard extends StatelessWidget {
 }
 
 class _InfoGlassCard extends StatelessWidget {
-  const _InfoGlassCard({
-    required this.isProcessing,
-  });
+  const _InfoGlassCard({required this.isProcessing});
 
   final bool isProcessing;
 
@@ -396,10 +490,7 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.78),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.65),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.65), width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.06),
@@ -416,10 +507,7 @@ class _GlassCard extends StatelessWidget {
 }
 
 class _IconBubble extends StatelessWidget {
-  const _IconBubble({
-    required this.icon,
-    required this.color,
-  });
+  const _IconBubble({required this.icon, required this.color});
 
   final IconData icon;
   final Color color;
@@ -433,11 +521,7 @@ class _IconBubble extends StatelessWidget {
         color: color.withOpacity(0.14),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(
-        icon,
-        color: color,
-        size: 22,
-      ),
+      child: Icon(icon, color: color, size: 22),
     );
   }
 }
@@ -463,9 +547,7 @@ class _ScannerFrame extends StatelessWidget {
 }
 
 class _Corner extends StatelessWidget {
-  const _Corner({
-    required this.alignment,
-  });
+  const _Corner({required this.alignment});
 
   final Alignment alignment;
 
@@ -530,11 +612,13 @@ class _PointageResultDialogState extends State<_PointageResultDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final Color color =
-        widget.success ? const Color(0xFF22C55E) : const Color(0xFFFF3B30);
+    final Color color = widget.success
+        ? const Color(0xFF22C55E)
+        : const Color(0xFFFF3B30);
 
-    final IconData icon =
-        widget.success ? CupertinoIcons.checkmark : CupertinoIcons.xmark;
+    final IconData icon = widget.success
+        ? CupertinoIcons.checkmark
+        : CupertinoIcons.xmark;
 
     return Center(
       child: Padding(
@@ -578,10 +662,7 @@ class _PointageResultDialogState extends State<_PointageResultDialog> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
-                            colors: [
-                              color.withOpacity(0.85),
-                              color,
-                            ],
+                            colors: [color.withOpacity(0.85), color],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -593,11 +674,7 @@ class _PointageResultDialogState extends State<_PointageResultDialog> {
                             ),
                           ],
                         ),
-                        child: Icon(
-                          icon,
-                          color: Colors.white,
-                          size: 44,
-                        ),
+                        child: Icon(icon, color: Colors.white, size: 44),
                       ),
                     ),
                   ),
@@ -680,10 +757,7 @@ class _PointageResultDialogState extends State<_PointageResultDialog> {
 }
 
 class _BlurCircle extends StatelessWidget {
-  const _BlurCircle({
-    required this.size,
-    required this.color,
-  });
+  const _BlurCircle({required this.size, required this.color});
 
   final double size;
   final Color color;
@@ -695,10 +769,7 @@ class _BlurCircle extends StatelessWidget {
       child: Container(
         height: size,
         width: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
