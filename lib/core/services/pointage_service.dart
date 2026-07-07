@@ -7,36 +7,36 @@ import 'session_service.dart';
 import 'location_service.dart';
 
 class PointageService {
-static Future<Map<String, dynamic>> me() async {
-  try {
-    final userId = await SessionService.getUserId();
-    final companyId = await SessionService.getCompanyId();
-    final position = await LocationService.getCurrentPosition();
+  static Future<Map<String, dynamic>> me() async {
+    try {
+      final userId = await SessionService.getUserId();
+      final companyId = await SessionService.getCompanyId();
+      final position = await LocationService.getCurrentPosition();
 
-    final response = await http.post(
-      ApiService.pointage("me.php"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "user_id": userId,
-        "company_id": companyId,
-        "latitude": position?.latitude,
-        "longitude": position?.longitude,
-        "gps_accuracy": position?.accuracy,
-      }),
-    );
+      final response = await http.post(
+        ApiService.pointage("me.php"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": userId,
+          "company_id": companyId,
+          "latitude": position?.latitude,
+          "longitude": position?.longitude,
+          "gps_accuracy": position?.accuracy,
+        }),
+      );
 
-    print("ME STATUS: ${response.statusCode}");
-    print("ME BODY: ${response.body}");
+      print("ME STATUS: ${response.statusCode}");
+      print("ME BODY: ${response.body}");
 
-    if (response.statusCode != 200) {
-      return {"success": false};
+      if (response.statusCode != 200) {
+        return {"success": false};
+      }
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
     }
-
-    return jsonDecode(response.body);
-  } catch (e) {
-    return {"success": false, "message": e.toString()};
   }
-}
 
   static Future<Map<String, dynamic>> clock() async {
     try {
@@ -125,10 +125,7 @@ static Future<Map<String, dynamic>> me() async {
 
       return jsonDecode(response.body);
     } catch (e) {
-      return {
-        "success": false,
-        "message": e.toString(),
-      };
+      return {"success": false, "message": e.toString()};
     }
   }
 }

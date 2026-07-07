@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../core/services/session_service.dart';
+import '../core/services/pointage_service.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -40,50 +40,115 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Future<void> loadSubscription() async {
-    final c = await SessionService.getCompanyName();
-    final cs = await SessionService.getCompanyStatus();
-    final ss = await SessionService.getSubscriptionStatus();
-    final p = await SessionService.getPlan();
-    final trial = await SessionService.getTrialEndsAt();
-    final end = await SessionService.getSubscriptionEndsAt();
-    final cid = await SessionService.getCompanyId();
-    final uid = await SessionService.getUserId();
+    final data = await PointageService.me();
 
     if (!mounted) return;
 
+    final company = data["company"];
+    final subscription = data["subscription"];
+
     setState(() {
-      companyName = c;
-      companyStatus = cs;
-      subscriptionStatus = ss;
-      plan = p;
-      trialEndsAt = trial;
-      subscriptionEndsAt = end;
-      companyId = cid ?? 0;
-      userId = uid ?? 0;
+      companyName = company?["name"]?.toString() ?? '';
+      companyStatus = company?["status"]?.toString() ?? '';
+      subscriptionStatus = subscription?["status"]?.toString() ?? '';
+      plan = subscription?["plan_key"]?.toString() ?? '';
+      trialEndsAt = subscription?["trial_ends_at"]?.toString() ?? '';
+      subscriptionEndsAt =
+          subscription?["subscription_ends_at"]?.toString() ?? '';
+      companyId = int.tryParse(company?["id"]?.toString() ?? '') ?? 0;
+      userId = int.tryParse(data["user"]?["id"]?.toString() ?? '') ?? 0;
     });
   }
 
   bool get isActive {
-    return subscriptionStatus == 'active' ||
+    final hasValidStatus =
+        subscriptionStatus == 'active' ||
         subscriptionStatus == 'trialing' ||
         subscriptionStatus == 'trial';
+
+    if (!hasValidStatus) return false;
+
+    if (subscriptionEndsAt.isNotEmpty) {
+      final endDate = DateTime.tryParse(subscriptionEndsAt);
+
+      if (endDate != null && endDate.isBefore(DateTime.now())) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   Color get statusColor {
-    if (isActive) return green;
-    if (companyStatus == 'blocked' || companyStatus == 'inactive') return red;
-    return orange;
+    if (subscriptionEndsAt.isNotEmpty) {
+      final endDate = DateTime.tryParse(subscriptionEndsAt);
+
+      if (endDate != null && endDate.isBefore(DateTime.now())) {
+        return red;
+      }
+    }
+
+    switch (subscriptionStatus) {
+      case 'active':
+        return green;
+
+      case 'trial':
+      case 'trialing':
+        return blue;
+
+      case 'past_due':
+        return orange;
+
+      case 'canceled':
+      case 'cancelled':
+      case 'expired':
+        return red;
+
+      default:
+        return orange;
+    }
   }
 
   String get statusLabel {
-    if (subscriptionStatus == 'active') return 'Abonnement actif';
-    if (subscriptionStatus == 'trialing' || subscriptionStatus == 'trial') {
-      return 'Période d’essai active';
+    if (subscriptionEndsAt.isNotEmpty) {
+      final endDate = DateTime.tryParse(subscriptionEndsAt);
+
+      if (endDate != null && endDate.isBefore(DateTime.now())) {
+        return 'Abonnement expiré';
+      }
     }
-    if (companyStatus == 'blocked') return 'Compte bloqué';
-    if (companyStatus == 'inactive') return 'Compte inactif';
-    if (subscriptionStatus.isEmpty) return 'Statut non défini';
-    return subscriptionStatus;
+
+    switch (subscriptionStatus) {
+      case 'active':
+        return 'Abonnement actif';
+
+      case 'trial':
+      case 'trialing':
+        return 'Période d’essai';
+
+      case 'past_due':
+        return 'Paiement en attente';
+
+      case 'canceled':
+      case 'cancelled':
+        return 'Abonnement annulé';
+
+      case 'expired':
+        return 'Abonnement expiré';
+
+      default:
+        break;
+    }
+
+    if (companyStatus == 'blocked') {
+      return 'Entreprise bloquée';
+    }
+
+    if (companyStatus == 'inactive') {
+      return 'Entreprise inactive';
+    }
+
+    return 'Aucun abonnement';
   }
 
   String get planLabel {
@@ -91,24 +156,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     return plan[0].toUpperCase() + plan.substring(1);
   }
 
-Future<void> openRenewPage() async {
-  final uri = Uri.parse(
-    'https://taskflowapp.eu/pointagepro-web/subscription.php'
-    '?company_id=$companyId&user_id=$userId',
-  );
-
-  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-    if (!mounted) return;
-
-    showCupertinoDialog(
-      context: context,
-      builder: (_) => const CupertinoAlertDialog(
-        title: Text('Impossible d’ouvrir la page'),
-        content: Text('Veuillez réessayer plus tard.'),
-      ),
+  Future<void> openRenewPage() async {
+    final uri = Uri.parse(
+      'https://taskflowapp.eu/pointagepro-web/subscription.php'
+      '?company_id=$companyId&user_id=$userId',
     );
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+
+      showCupertinoDialog(
+        context: context,
+        builder: (_) => const CupertinoAlertDialog(
+          title: Text('Impossible d’ouvrir la page'),
+          content: Text('Veuillez réessayer plus tard.'),
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -204,6 +269,12 @@ Future<void> openRenewPage() async {
                 title: 'Fin de l’essai',
                 value: trialEndsAt,
               ),
+
+            const SizedBox(height: 20),
+
+            const SizedBox(height: 8),
+
+            _PlansCard(currentPlan: plan),
 
             const SizedBox(height: 20),
 
@@ -390,6 +461,178 @@ class _BenefitsCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlansCard extends StatelessWidget {
+  const _PlansCard({required this.currentPlan});
+
+  final String currentPlan;
+
+  @override
+  Widget build(BuildContext context) {
+    final plans = [
+      {
+        'key': 'free',
+        'name': 'Free',
+        'price': '0 € / mois',
+        'description': 'Idéal pour tester PointagePro.',
+        'features': [
+          'Essai ou accès limité',
+          'Pointage de base',
+          'Gestion simple des employés',
+        ],
+      },
+      {
+        'key': 'pro',
+        'name': 'Pro',
+        'price': '19,99 € / mois',
+        'description': 'Pour les petites équipes.',
+        'features': [
+          'Pointage illimité',
+          'QR Code entreprise',
+          'Planning',
+          'Historique des pointages',
+        ],
+      },
+      {
+        'key': 'business',
+        'name': 'Business',
+        'price': '39,99 € / mois',
+        'description': 'Pour les entreprises avec plusieurs employés.',
+        'features': [
+          'Toutes les fonctions Pro',
+          'Rapports avancés',
+          'Statistiques',
+          'Accès web administrateur',
+          'Support prioritaire',
+        ],
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Formules disponibles',
+          style: TextStyle(
+            color: _SubscriptionScreenState.text,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 14),
+        ...plans.map((planData) {
+          final isCurrent = currentPlan == planData['key'];
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: isCurrent
+                    ? _SubscriptionScreenState.blue
+                    : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.055),
+                  blurRadius: 22,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        planData['name'] as String,
+                        style: const TextStyle(
+                          color: _SubscriptionScreenState.text,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    if (isCurrent)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _SubscriptionScreenState.blue.withOpacity(
+                            0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          'Actuel',
+                          style: TextStyle(
+                            color: _SubscriptionScreenState.blue,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  planData['price'] as String,
+                  style: const TextStyle(
+                    color: _SubscriptionScreenState.blue,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  planData['description'] as String,
+                  style: const TextStyle(
+                    color: _SubscriptionScreenState.subtitle,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...(planData['features'] as List<String>).map(
+                  (feature) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          CupertinoIcons.checkmark_circle_fill,
+                          color: _SubscriptionScreenState.green,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            feature,
+                            style: const TextStyle(
+                              color: _SubscriptionScreenState.text,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 }

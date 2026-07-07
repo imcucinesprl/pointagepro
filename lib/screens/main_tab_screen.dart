@@ -11,6 +11,7 @@ import 'manager/manager_dashboard_screen.dart';
 import 'profile_screen.dart';
 import 'admin/qr_code_screen.dart';
 import '../widgets/subscription_warning_dialog.dart';
+import '../core/services/pointage_service.dart';
 
 class MainTabScreen extends StatefulWidget {
   const MainTabScreen({super.key});
@@ -96,19 +97,32 @@ class _MainTabScreenState extends State<MainTabScreen> {
   }
 
   Future<void> _showSubscriptionWarning() async {
-    if (_subscriptionPopupShown) return;
-
-    final hasSubscription = await SessionService.hasActiveSubscription();
-
-    if (!mounted) return;
-
-    if (hasSubscription) return;
-
-    if (role == 'employee' || role == 'student' || role == 'flexi') {
+    if (_subscriptionPopupShown) {
+      print("POPUP SUB: déjà affichée");
       return;
     }
 
+    print("POPUP SUB: vérification démarrée");
+
+    final data = await PointageService.me();
+
+    print("POPUP SUB DATA: ${data["subscription"]}");
+
+    if (!mounted) return;
+
+    final showPopup = data["subscription"]?["show_popup"] == true;
+
+    print("POPUP SUB showPopup = $showPopup");
+
+    if (!showPopup) return;
+
     _subscriptionPopupShown = true;
+
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    if (!mounted) return;
+
+    print("POPUP SUB: affichage");
 
     await SubscriptionWarningDialog.show(context);
   }

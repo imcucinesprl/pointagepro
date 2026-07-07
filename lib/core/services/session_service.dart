@@ -113,20 +113,36 @@ class SessionService {
   static Future<bool> hasActiveSubscription() async {
     final role = await getRole();
 
-    if (role == 'employee') {
+    if (role == 'employee' || role == 'student' || role == 'flexi') {
       return true;
     }
 
     final companyStatus = await getCompanyStatus();
     final subscriptionStatus = await getSubscriptionStatus();
+    final subscriptionEndsAt = await getSubscriptionEndsAt();
 
     if (companyStatus == 'inactive' || companyStatus == 'blocked') {
       return false;
     }
 
-    return subscriptionStatus == 'active' ||
+    final hasValidStatus =
+        subscriptionStatus == 'active' ||
         subscriptionStatus == 'trialing' ||
         subscriptionStatus == 'trial';
+
+    if (!hasValidStatus) {
+      return false;
+    }
+
+    if (subscriptionEndsAt.isNotEmpty) {
+      final endDate = DateTime.tryParse(subscriptionEndsAt);
+
+      if (endDate != null && endDate.isBefore(DateTime.now())) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   static Future<void> saveCompanyId(int companyId) async {
@@ -162,6 +178,22 @@ class SessionService {
         companyId > 0 &&
         role != null &&
         role.isNotEmpty;
+  }
+
+  static Future<void> saveSubscriptionData({
+    String? companyStatus,
+    String? subscriptionStatus,
+    String? plan,
+    String? trialEndsAt,
+    String? subscriptionEndsAt,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(_companyStatusKey, companyStatus ?? '');
+    await prefs.setString(_subscriptionStatusKey, subscriptionStatus ?? '');
+    await prefs.setString(_planKey, plan ?? '');
+    await prefs.setString(_trialEndsAtKey, trialEndsAt ?? '');
+    await prefs.setString(_subscriptionEndsAtKey, subscriptionEndsAt ?? '');
   }
 
   static Future<void> logout() async {

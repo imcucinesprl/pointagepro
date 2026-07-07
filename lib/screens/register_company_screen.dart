@@ -35,6 +35,40 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
   bool obscurePassword = true;
   String? errorMessage;
 
+  String formatVatNumber(String value) {
+    final cleaned = value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+
+    if (cleaned.isEmpty) {
+      return '';
+    }
+
+    if (cleaned.length <= 2 && RegExp(r'^[A-Z]+$').hasMatch(cleaned)) {
+      return cleaned;
+    }
+
+    String prefix = '';
+    String digits = cleaned.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (cleaned.length >= 2 &&
+        RegExp(r'^[A-Z]{2}$').hasMatch(cleaned.substring(0, 2))) {
+      prefix = cleaned.substring(0, 2);
+      digits = cleaned.substring(2).replaceAll(RegExp(r'[^0-9]'), '');
+    }
+
+    if (digits.length <= 4) {
+      return '$prefix$digits';
+    }
+
+    if (digits.length <= 7) {
+      return '$prefix${digits.substring(0, 4)}.${digits.substring(4)}';
+    }
+
+    return '$prefix'
+        '${digits.substring(0, 4)}.'
+        '${digits.substring(4, 7)}.'
+        '${digits.substring(7)}';
+  }
+
   Future<void> registerCompany() async {
     if (isLoading) return;
 
@@ -95,8 +129,8 @@ class _RegisterCompanyScreenState extends State<RegisterCompanyScreen> {
         }),
       );
 
-print("STATUS: ${response.statusCode}");
-print("BODY: ${response.body}");
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
 
       final data = jsonDecode(response.body);
 
@@ -218,6 +252,22 @@ print("BODY: ${response.body}");
                         controller: vatController,
                         placeholder: "Numéro TVA",
                         icon: CupertinoIcons.doc_text_fill,
+                        keyboardType: TextInputType.visiblePassword,
+                        textCapitalization: TextCapitalization.characters,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        onChanged: (value) {
+                          final formatted = formatVatNumber(value);
+
+                          if (formatted != value) {
+                            vatController.value = TextEditingValue(
+                              text: formatted,
+                              selection: TextSelection.collapsed(
+                                offset: formatted.length,
+                              ),
+                            );
+                          }
+                        },
                       ),
                       const SizedBox(height: 14),
                       _GlassTextField(
@@ -354,6 +404,10 @@ class _GlassTextField extends StatelessWidget {
     required this.icon,
     this.keyboardType,
     this.obscureText = false,
+    this.onChanged,
+    this.textCapitalization = TextCapitalization.none,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
   });
 
   final TextEditingController controller;
@@ -361,6 +415,10 @@ class _GlassTextField extends StatelessWidget {
   final IconData icon;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final ValueChanged<String>? onChanged;
+  final TextCapitalization textCapitalization;
+  final bool autocorrect;
+  final bool enableSuggestions;
 
   @override
   Widget build(BuildContext context) {
@@ -368,8 +426,12 @@ class _GlassTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      onChanged: onChanged,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       placeholder: placeholder,
+      textCapitalization: textCapitalization,
+      autocorrect: autocorrect,
+      enableSuggestions: enableSuggestions,
       prefix: Padding(
         padding: const EdgeInsets.only(left: 14),
         child: Icon(icon, color: _RegisterCompanyScreenState.blue, size: 22),
