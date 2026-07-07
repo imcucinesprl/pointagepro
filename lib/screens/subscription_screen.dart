@@ -27,6 +27,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   String plan = '';
   String trialEndsAt = '';
   String subscriptionEndsAt = '';
+  String subscriptionEndsAtLabel = '';
+  String trialEndsAtLabel = '';
   int companyId = 0;
   int userId = 0;
 
@@ -52,9 +54,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       companyStatus = company?["status"]?.toString() ?? '';
       subscriptionStatus = subscription?["status"]?.toString() ?? '';
       plan = subscription?["plan_key"]?.toString() ?? '';
-      trialEndsAt = subscription?["trial_ends_at"]?.toString() ?? '';
-      subscriptionEndsAt =
-          subscription?["subscription_ends_at"]?.toString() ?? '';
+trialEndsAt = subscription?["trial_ends_at"]?.toString() ?? '';
+subscriptionEndsAt =
+    subscription?["subscription_ends_at"]?.toString() ?? '';
+
+trialEndsAtLabel = formatDateFr(trialEndsAt);
+subscriptionEndsAtLabel = formatDateFr(subscriptionEndsAt);
       companyId = int.tryParse(company?["id"]?.toString() ?? '') ?? 0;
       userId = int.tryParse(data["user"]?["id"]?.toString() ?? '') ?? 0;
     });
@@ -154,6 +159,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   String get planLabel {
     if (plan.isEmpty) return 'Non défini';
     return plan[0].toUpperCase() + plan.substring(1);
+  }
+
+  String formatDateFr(String value) {
+  if (value.trim().isEmpty) return '';
+
+  final date = DateTime.tryParse(value);
+  if (date == null) return value;
+
+  final day = date.day.toString().padLeft(2, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final year = date.year.toString();
+
+  return '$day/$month/$year';
   }
 
   Future<void> openRenewPage() async {
@@ -259,7 +277,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 icon: CupertinoIcons.calendar,
                 iconColor: blue,
                 title: 'Fin d’abonnement',
-                value: subscriptionEndsAt,
+                value: subscriptionEndsAtLabel,
               ),
 
             if (trialEndsAt.isNotEmpty)
@@ -267,7 +285,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 icon: CupertinoIcons.time_solid,
                 iconColor: orange,
                 title: 'Fin de l’essai',
-                value: trialEndsAt,
+                value: trialEndsAtLabel,
               ),
 
             const SizedBox(height: 20),
