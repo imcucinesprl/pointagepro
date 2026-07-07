@@ -29,7 +29,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>PointagePro utilise votre position uniquement au moment du pointage afin de vérifier votre présence sur le lieu de travail.</string>
+    <string>PointagePro utilise votre position afin de vérifier que le pointage est effectué depuis le lieu de travail autorisé.</string>
+
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>PointagePro utilise votre position afin de vérifier que le pointage est effectué depuis le lieu de travail autorisé.</string>
+
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>PointagePro utilise votre position afin de vérifier que le pointage est effectué depuis le lieu de travail autorisé.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>La caméra est utilisée pour scanner le QR Code de pointage du magasin.</string>
 	<key>UIApplicationSceneManifest</key>
