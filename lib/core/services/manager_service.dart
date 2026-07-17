@@ -312,4 +312,34 @@ static Future<Map<String, dynamic>> updateUser({
   }
 }
 
+static Future<Map<String, dynamic>> planningWeek({
+  required String weekStart,
+}) async {
+  try {
+    final companyId = await SessionService.getCompanyId();
+
+    if (companyId == null || companyId <= 0) {
+      return {
+        "success": false,
+        "message": "Entreprise introuvable dans la session.",
+      };
+    }
+
+    final url = Uri.parse(
+      '$baseUrl/planning_comparison.php'
+      '?company_id=$companyId'
+      '&week_start=$weekStart',
+    );
+
+    final response = await http.get(url);
+
+    return _decodeResponse(response);
+  } catch (e) {
+    return {
+      "success": false,
+      "message": "Erreur de connexion : $e",
+    };
+  }
+}
+
 }
