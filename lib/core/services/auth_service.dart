@@ -17,28 +17,49 @@ class AuthService {
       final response = await http.post(
         ApiService.auth("login.php"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+        }),
       );
 
-      final data = jsonDecode(response.body);
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        lastErrorMessage = "Réponse invalide du serveur.";
+        return false;
+      }
+
+      final data = decodedData;
 
       lastErrorMessage = data["message"]?.toString();
 
       if (response.statusCode == 200 && data["success"] == true) {
-        final user = data["user"];
+        final dynamic rawUser = data["user"];
 
-        final userId = int.tryParse(user["id"].toString());
-        final companyId = int.tryParse(user["company_id"].toString());
+        if (rawUser is! Map<String, dynamic>) {
+          lastErrorMessage = "Données utilisateur invalides.";
+          return false;
+        }
+
+        final user = rawUser;
+        final dynamic rawCompany = data["company"];
+        final Map<String, dynamic> company =
+            rawCompany is Map<String, dynamic> ? rawCompany : user;
+
+        final userId = int.tryParse(user["id"]?.toString() ?? "");
+        final companyId = int.tryParse(
+          user["company_id"]?.toString() ?? "",
+        );
 
         if (userId == null ||
             userId <= 0 ||
             companyId == null ||
             companyId <= 0) {
-          lastErrorMessage = "Session invalide. Veuillez contacter le support.";
+          lastErrorMessage =
+              "Session invalide. Veuillez contacter le support.";
           return false;
         }
-
-        final company = data["company"] ?? user;
 
         await SessionService.saveSession(
           userId: userId,
@@ -48,22 +69,27 @@ class AuthService {
           firstName: user["firstname"]?.toString(),
           lastName: user["lastname"]?.toString(),
           companyName:
-              company?["name"]?.toString() ?? user["company_name"]?.toString(),
+              company["name"]?.toString() ??
+              user["company_name"]?.toString(),
+          synkroClientKey:
+              company["synkro_client_key"]?.toString() ??
+              user["synkro_client_key"]?.toString(),
 
           // Abonnement PointagePro
           companyStatus:
-              company?["status"]?.toString() ??
+              company["status"]?.toString() ??
               user["company_status"]?.toString(),
           subscriptionStatus:
-              company?["subscription_status"]?.toString() ??
+              company["subscription_status"]?.toString() ??
               user["subscription_status"]?.toString(),
           plan:
-              company?["plan"]?.toString() ?? user["company_plan"]?.toString(),
+              company["plan"]?.toString() ??
+              user["company_plan"]?.toString(),
           trialEndsAt:
-              company?["trial_ends_at"]?.toString() ??
+              company["trial_ends_at"]?.toString() ??
               user["trial_ends_at"]?.toString(),
           subscriptionEndsAt:
-              company?["subscription_ends_at"]?.toString() ??
+              company["subscription_ends_at"]?.toString() ??
               user["subscription_ends_at"]?.toString(),
         );
 
@@ -72,13 +98,18 @@ class AuthService {
 
       lastErrorMessage ??= "Email ou mot de passe incorrect.";
       return false;
+    } on FormatException {
+      lastErrorMessage = "Réponse invalide du serveur.";
+      return false;
     } catch (e) {
       lastErrorMessage = "Erreur de connexion au serveur.";
       return false;
     }
   }
 
-  static Future<bool> forgotPassword({required String email}) async {
+  static Future<bool> forgotPassword({
+    required String email,
+  }) async {
     try {
       final response = await http.post(
         ApiService.auth("forgot_password2.php"),
@@ -86,11 +117,21 @@ class AuthService {
         body: jsonEncode({"email": email}),
       );
 
-      final data = jsonDecode(response.body);
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        lastErrorMessage = "Réponse invalide du serveur.";
+        return false;
+      }
+
+      final data = decodedData;
 
       lastErrorMessage = data["message"]?.toString();
 
       return data["success"] == true;
+    } on FormatException {
+      lastErrorMessage = "Réponse invalide du serveur.";
+      return false;
     } catch (e) {
       lastErrorMessage = "Erreur de connexion au serveur.";
       return false;

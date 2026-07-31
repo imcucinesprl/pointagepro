@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../core/services/auth_service.dart';
+import '../core/services/push_notification_service.dart';
 import 'main_tab_screen.dart';
 import 'package:flutter/services.dart';
 import 'register_company_screen.dart';
@@ -58,14 +59,25 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = false;
     });
 
-    if (success) {
-      TextInput.finishAutofillContext(shouldSave: true);
+if (success) {
+  TextInput.finishAutofillContext(
+    shouldSave: true,
+  );
 
-      Navigator.pushReplacement(
-        context,
-        CupertinoPageRoute(builder: (_) => const MainTabScreen()),
-      );
-    } else {
+  // Enregistre l'appareil auprès du serveur
+  await PushNotificationService.registerCurrentDevice();
+
+  if (!mounted) {
+    return;
+  }
+
+  Navigator.pushReplacement(
+    context,
+    CupertinoPageRoute(
+      builder: (_) => const MainTabScreen(),
+    ),
+  );
+}else {
       setState(() {
         errorMessage =
             AuthService.lastErrorMessage ?? "Email ou mot de passe incorrect.";

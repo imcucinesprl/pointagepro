@@ -1,12 +1,41 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'core/services/push_notification_service.dart';
 import 'core/services/session_service.dart';
+import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_tab_screen.dart';
 
-void main() {
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(
+  RemoteMessage message,
+) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseMessaging.onBackgroundMessage(
+    firebaseMessagingBackgroundHandler,
+  );
+
   runApp(const PointageProApp());
+
+  unawaited(
+    PushNotificationService.initialize(),
+  );
 }
 
 class PointageProApp extends StatelessWidget {
@@ -17,11 +46,26 @@ class PointageProApp extends StatelessWidget {
     return CupertinoApp(
       debugShowCheckedModeBanner: false,
       title: 'PointagePro',
+
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+
+      supportedLocales: const [
+        Locale('fr', 'FR'),
+        Locale('en', 'US'),
+      ],
+
+      locale: const Locale('fr', 'FR'),
+
       theme: const CupertinoThemeData(
         brightness: Brightness.light,
         primaryColor: Color(0xFF007AFF),
         scaffoldBackgroundColor: Color(0xFFF2F2F7),
       ),
+
       home: const AuthGate(),
     );
   }

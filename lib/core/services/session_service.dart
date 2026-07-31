@@ -8,6 +8,7 @@ class SessionService {
   static const _firstNameKey = 'first_name';
   static const _lastNameKey = 'last_name';
   static const _companyNameKey = 'company_name';
+  static const _synkroClientKeyKey = 'synkro_client_key';
 
   // Abonnement
   static const _companyStatusKey = 'company_status';
@@ -24,6 +25,7 @@ class SessionService {
     String? firstName,
     String? lastName,
     String? companyName,
+    String? synkroClientKey,
 
     // Abonnement
     String? companyStatus,
@@ -42,6 +44,11 @@ class SessionService {
     await prefs.setString(_firstNameKey, firstName ?? '');
     await prefs.setString(_lastNameKey, lastName ?? '');
     await prefs.setString(_companyNameKey, companyName ?? '');
+
+    await prefs.setString(
+  _synkroClientKeyKey,
+  synkroClientKey?.trim() ?? '',
+);
 
     await prefs.setString(_companyStatusKey, companyStatus ?? '');
     await prefs.setString(_subscriptionStatusKey, subscriptionStatus ?? '');
@@ -206,6 +213,7 @@ class SessionService {
     await prefs.remove(_firstNameKey);
     await prefs.remove(_lastNameKey);
     await prefs.remove(_companyNameKey);
+    await prefs.remove(_synkroClientKeyKey);
 
     await prefs.remove(_companyStatusKey);
     await prefs.remove(_subscriptionStatusKey);
@@ -214,7 +222,30 @@ class SessionService {
     await prefs.remove(_subscriptionEndsAtKey);
   }
 
+static Future<void> saveSynkroClientKey(String? synkroClientKey) async {
+  final prefs = await SharedPreferences.getInstance();
+  final value = synkroClientKey?.trim() ?? '';
+
+  if (value.isEmpty) {
+    await prefs.remove(_synkroClientKeyKey);
+    return;
+  }
+
+  await prefs.setString(_synkroClientKeyKey, value);
+}
+
   static Future<void> clearSession() async {
     await logout();
   }
+
+static Future<String?> getSynkroClientKey() async {
+  final prefs = await SharedPreferences.getInstance();
+  final value = prefs.getString(_synkroClientKeyKey)?.trim();
+
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+
+  return value;
+}
 }
