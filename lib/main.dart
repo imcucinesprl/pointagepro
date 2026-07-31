@@ -11,6 +11,16 @@ import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_tab_screen.dart';
 
+/*
+|--------------------------------------------------------------------------
+| Réception Firebase en arrière-plan
+|--------------------------------------------------------------------------
+|
+| Cette fonction doit rester en dehors de toute classe.
+| L’annotation vm:entry-point est nécessaire pour les builds release.
+|
+*/
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(
   RemoteMessage message,
@@ -18,7 +28,25 @@ Future<void> firebaseMessagingBackgroundHandler(
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  debugPrint(
+    'Notification Firebase reçue en arrière-plan.',
+  );
+
+  debugPrint(
+    'Message Firebase arrière-plan : ${message.messageId}',
+  );
+
+  debugPrint(
+    'Données Firebase arrière-plan : ${message.data}',
+  );
 }
+
+/*
+|--------------------------------------------------------------------------
+| Démarrage de l’application
+|--------------------------------------------------------------------------
+*/
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,68 +55,132 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  /*
+   * Le gestionnaire d’arrière-plan doit être enregistré
+   * avant le lancement de l’interface.
+   */
   FirebaseMessaging.onBackgroundMessage(
     firebaseMessagingBackgroundHandler,
   );
 
-  runApp(const PointageProApp());
-
-  unawaited(
-    PushNotificationService.initialize(),
+  runApp(
+    const PointageProApp(),
   );
 }
 
+/*
+|--------------------------------------------------------------------------
+| Application principale
+|--------------------------------------------------------------------------
+*/
+
 class PointageProApp extends StatelessWidget {
-  const PointageProApp({super.key});
+  const PointageProApp({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp(
+    return const CupertinoApp(
       debugShowCheckedModeBanner: false,
       title: 'PointagePro',
 
-      localizationsDelegates: const [
+      localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
 
-      supportedLocales: const [
+      supportedLocales: [
         Locale('fr', 'FR'),
         Locale('en', 'US'),
       ],
 
-      locale: const Locale('fr', 'FR'),
+      locale: Locale('fr', 'FR'),
 
-      theme: const CupertinoThemeData(
+      theme: CupertinoThemeData(
         brightness: Brightness.light,
         primaryColor: Color(0xFF007AFF),
-        scaffoldBackgroundColor: Color(0xFFF2F2F7),
+        scaffoldBackgroundColor: Color(
+          0xFFF2F2F7,
+        ),
       ),
 
-      home: const AuthGate(),
+      home: AuthGate(),
     );
   }
 }
 
-class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
+/*
+|--------------------------------------------------------------------------
+| Vérification de la connexion
+|--------------------------------------------------------------------------
+*/
 
-  Future<bool> _checkLoginState() async {
-    return SessionService.isLoggedIn();
+class AuthGate extends StatefulWidget {
+  const AuthGate({
+    super.key,
+  });
+
+  @override
+  State<AuthGate> createState() =>
+      _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  late final Future<bool> _loginStateFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loginStateFuture =
+        _initializeApplication();
+  }
+
+  /*
+   * Vérifie la session puis initialise les notifications
+   * uniquement lorsqu’un utilisateur est déjà connecté.
+   */
+  Future<bool> _initializeApplication() async {
+    final isLoggedIn =
+        await SessionService.isLoggedIn();
+
+    if (isLoggedIn) {
+      /*
+       * L’interface peut continuer à démarrer pendant que
+       * Firebase récupère le token et enregistre l’appareil.
+       */
+
+    }
+
+    return isLoggedIn;
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: _checkLoginState(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+      future: _loginStateFuture,
+      builder: (
+        BuildContext context,
+        AsyncSnapshot<bool> snapshot,
+      ) {
+        if (snapshot.connectionState !=
+            ConnectionState.done) {
           return const CupertinoPageScaffold(
             child: Center(
               child: CupertinoActivityIndicator(),
             ),
           );
+        }
+
+        if (snapshot.hasError) {
+          debugPrint(
+            'Erreur vérification session : '
+            '${snapshot.error}',
+          );
+
+          return const LoginScreen();
         }
 
         if (snapshot.data == true) {

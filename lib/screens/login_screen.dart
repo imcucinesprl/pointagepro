@@ -64,8 +64,8 @@ if (success) {
     shouldSave: true,
   );
 
-  // Enregistre l'appareil auprès du serveur
-  await PushNotificationService.registerCurrentDevice();
+// Initialise complètement le service de notifications
+await PushNotificationService.initialize();
 
   if (!mounted) {
     return;

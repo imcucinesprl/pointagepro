@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -21,27 +22,58 @@ class PushNotificationService {
   |--------------------------------------------------------------------------
   */
 
-  /// Clé publique VAPID disponible dans :
+  /// Clé publique VAPID Firebase Web.
   ///
   /// Firebase Console
   /// → Paramètres du projet
   /// → Cloud Messaging
   /// → Certificats Web Push
-  ///
-  /// Ne jamais utiliser une clé privée ici.
-  static const String _webVapidKey =
-      'BClB9jJjsVv12Ho4a23oTXcOrxAWNDNQarUS3dLEpDJ9eQFclP6zFCD_CzViXJ6Z09NWbkxvSVaAQWUUdIqRLAQ';
+  static const String _webVapidKey = 'BClB9jJjsVv12Ho4a23oTXcOrxAWNDNQarUS3dLEpDJ9eQFclP6zFCD_CzViXJ6Z09NWbkxvSVaAQWUUdIqRLAQ';
 
-  /// Mets cette valeur à true uniquement pour forcer une fois la
-  /// régénération du token Web.
-  ///
-  /// Après le premier test réussi, remets impérativement false.
+  /// Active temporairement cette valeur pour supprimer et recréer
+  /// le token Firebase Web.
   static const bool _forceWebTokenRefresh = false;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Firebase Messaging
+  |--------------------------------------------------------------------------
+  */
 
   static final FirebaseMessaging _messaging =
       FirebaseMessaging.instance;
 
-  static StreamSubscription<String>? _tokenSubscription;
+  /*
+  |--------------------------------------------------------------------------
+  | Notifications locales Android / iOS
+  |--------------------------------------------------------------------------
+  */
+
+  static final FlutterLocalNotificationsPlugin
+      _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  static const AndroidNotificationChannel
+      _androidMessageChannel =
+      AndroidNotificationChannel(
+    'synkro_messages',
+    'Messages Synkro',
+    description:
+        'Notifications des nouveaux messages Synkro et WhatsApp.',
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+    showBadge: true,
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Abonnements
+  |--------------------------------------------------------------------------
+  */
+
+  static StreamSubscription<String>?
+      _tokenSubscription;
 
   static StreamSubscription<RemoteMessage>?
       _foregroundMessageSubscription;
@@ -49,11 +81,20 @@ class PushNotificationService {
   static StreamSubscription<RemoteMessage>?
       _notificationOpenSubscription;
 
+  /*
+  |--------------------------------------------------------------------------
+  | États internes
+  |--------------------------------------------------------------------------
+  */
+
   static bool _initialized = false;
+
+  static bool _localNotificationsInitialized =
+      false;
 
   /*
   |--------------------------------------------------------------------------
-  | Initialisation
+  | Initialisation générale
   |--------------------------------------------------------------------------
   */
 
@@ -79,7 +120,29 @@ class PushNotificationService {
         '${Firebase.app().options.messagingSenderId}',
       );
 
-      final settings = await _requestPermission();
+      /*
+       * Les notifications locales sont utilisées pour afficher
+       * une notification lorsque l’application Android est ouverte.
+       */
+      await _initializeLocalNotifications();
+
+      /*
+       * Sur iOS, autorise Firebase à afficher une bannière
+       * pendant que l’application est ouverte.
+       */
+      if (!kIsWeb &&
+          defaultTargetPlatform ==
+              TargetPlatform.iOS) {
+        await _messaging
+            .setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+
+      final settings =
+          await _requestPermission();
 
       final permissionGranted =
           settings.authorizationStatus ==
@@ -97,22 +160,21 @@ class PushNotificationService {
       }
 
       /*
-       * Sur iOS et macOS natifs, le token APNs doit parfois
-       * être disponible avant la récupération du token FCM.
+       * Sur iOS et macOS, le token APNs doit être disponible
+       * avant la récupération du token FCM.
        */
       if (!kIsWeb &&
-          (defaultTargetPlatform ==
-                  TargetPlatform.iOS ||
-              defaultTargetPlatform ==
-                  TargetPlatform.macOS)) {
+          (
+            defaultTargetPlatform ==
+                    TargetPlatform.iOS ||
+                defaultTargetPlatform ==
+                    TargetPlatform.macOS
+          )) {
         await _waitForApnsToken();
       }
 
       /*
-       * Régénération temporaire du token Web.
-       *
-       * Cette opération est utile lorsqu’un ancien token
-       * a été refusé par Firebase.
+       * Suppression temporaire d’un ancien token Web.
        */
       if (kIsWeb && _forceWebTokenRefresh) {
         await _deleteFirebaseToken();
@@ -153,6 +215,113 @@ class PushNotificationService {
 
   /*
   |--------------------------------------------------------------------------
+  | Initialisation des notifications locales
+  |--------------------------------------------------------------------------
+  */
+
+  static Future<void>
+      _initializeLocalNotifications() async {
+    if (_localNotificationsInitialized ||
+        kIsWeb) {
+      return;
+    }
+
+    const androidInitializationSettings =
+        AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
+
+    const darwinInitializationSettings =
+        DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
+    const initializationSettings =
+        InitializationSettings(
+      android: androidInitializationSettings,
+      iOS: darwinInitializationSettings,
+      macOS: darwinInitializationSettings,
+    );
+
+await _localNotifications.initialize(
+  settings: initializationSettings,
+  onDidReceiveNotificationResponse:
+      _onLocalNotificationOpened,
+);
+
+    if (defaultTargetPlatform ==
+        TargetPlatform.android) {
+      final androidPlugin =
+          _localNotifications
+              .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin>();
+
+      await androidPlugin
+          ?.createNotificationChannel(
+        _androidMessageChannel,
+      );
+    }
+
+    _localNotificationsInitialized = true;
+
+    debugPrint(
+      'Notifications locales initialisées.',
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Clic sur une notification locale
+  |--------------------------------------------------------------------------
+  */
+
+  static void _onLocalNotificationOpened(
+    NotificationResponse response,
+  ) {
+    debugPrint(
+      'Notification locale ouverte.',
+    );
+
+    debugPrint(
+      'Payload notification locale : '
+      '${response.payload}',
+    );
+
+    if (response.payload == null ||
+        response.payload!.trim().isEmpty) {
+      CommunicationEvents.notifyNewMessage();
+      return;
+    }
+
+    try {
+      final decoded =
+          jsonDecode(response.payload!);
+
+      if (decoded is Map) {
+        final data =
+            Map<String, dynamic>.from(
+          decoded,
+        );
+
+        debugPrint(
+          'Données de la notification locale : '
+          '$data',
+        );
+      }
+    } catch (error) {
+      debugPrint(
+        'Payload notification locale invalide : '
+        '$error',
+      );
+    }
+
+    CommunicationEvents.notifyNewMessage();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | Autorisations
   |--------------------------------------------------------------------------
   */
@@ -185,7 +354,7 @@ class PushNotificationService {
   */
 
   static Future<void> _waitForApnsToken() async {
-    const maximumAttempts = 10;
+    const maximumAttempts = 20;
 
     for (
       var attempt = 0;
@@ -204,6 +373,11 @@ class PushNotificationService {
         return;
       }
 
+      debugPrint(
+        'Attente du token APNs '
+        '${attempt + 1}/$maximumAttempts.',
+      );
+
       await Future<void>.delayed(
         const Duration(milliseconds: 500),
       );
@@ -220,7 +394,8 @@ class PushNotificationService {
   |--------------------------------------------------------------------------
   */
 
-  static Future<void> _deleteFirebaseToken() async {
+  static Future<void>
+      _deleteFirebaseToken() async {
     try {
       await _messaging.deleteToken();
 
@@ -246,7 +421,8 @@ class PushNotificationService {
   |--------------------------------------------------------------------------
   */
 
-  static Future<void> _listenToTokenRefresh() async {
+  static Future<void>
+      _listenToTokenRefresh() async {
     await _tokenSubscription?.cancel();
 
     _tokenSubscription =
@@ -257,7 +433,8 @@ class PushNotificationService {
 
         if (normalizedToken.isEmpty) {
           debugPrint(
-            'Firebase a retourné un token renouvelé vide.',
+            'Firebase a retourné un token '
+            'renouvelé vide.',
           );
 
           return;
@@ -279,8 +456,8 @@ class PushNotificationService {
 
         if (!registered) {
           debugPrint(
-            'Le nouveau token FCM n’a pas pu être '
-            'enregistré sur le serveur.',
+            'Le nouveau token FCM n’a pas pu '
+            'être enregistré sur le serveur.',
           );
         }
       },
@@ -310,13 +487,17 @@ class PushNotificationService {
           await SessionService.getUserId();
 
       final clientKey =
-          (await SessionService
-                      .getSynkroClientKey())
+          (
+            await SessionService
+                .getSynkroClientKey()
+          )
                   ?.trim() ??
               '';
 
       final authToken =
-          (await SessionService.getToken())
+          (
+            await SessionService.getToken()
+          )
                   ?.trim() ??
               '';
 
@@ -390,8 +571,7 @@ class PushNotificationService {
         'platform':
             DeviceService.getPlatformName(),
         'app_name': 'pointagepro',
-        'app_version':
-            packageInfo.version,
+        'app_version': packageInfo.version,
         'app_build':
             packageInfo.buildNumber,
         'device_name':
@@ -439,15 +619,18 @@ class PushNotificationService {
         '${token.length}',
       );
 
-      final response = await http
-          .post(
-            uri,
-            headers: headers,
-            body: jsonEncode(body),
-          )
-          .timeout(
-            const Duration(seconds: 15),
-          );
+      final response =
+          await http
+              .post(
+                uri,
+                headers: headers,
+                body: jsonEncode(body),
+              )
+              .timeout(
+                const Duration(
+                  seconds: 15,
+                ),
+              );
 
       final result =
           _decodeResponse(response);
@@ -466,14 +649,15 @@ class PushNotificationService {
       }
 
       debugPrint(
-        'Appareil enregistré pour les notifications.',
+        'Appareil enregistré pour '
+        'les notifications.',
       );
 
       return true;
     } on TimeoutException {
       debugPrint(
-        'Délai dépassé pendant l’enregistrement '
-        'de l’appareil push.',
+        'Délai dépassé pendant '
+        'l’enregistrement de l’appareil push.',
       );
 
       return false;
@@ -567,15 +751,18 @@ class PushNotificationService {
 
         debugPrint(
           'Début token FCM : '
-          '${normalizedToken.substring(0, previewLength)}...',
+          '${normalizedToken.substring(
+            0,
+            previewLength,
+          )}...',
         );
       }
 
       return normalizedToken;
     } catch (error, stackTrace) {
       debugPrint(
-        'Impossible de récupérer le token FCM : '
-        '$error',
+        'Impossible de récupérer '
+        'le token FCM : $error',
       );
 
       debugPrint(
@@ -599,7 +786,9 @@ class PushNotificationService {
       await _deleteFirebaseToken();
 
       await Future<void>.delayed(
-        const Duration(milliseconds: 500),
+        const Duration(
+          milliseconds: 500,
+        ),
       );
 
       return registerCurrentDevice();
@@ -610,8 +799,8 @@ class PushNotificationService {
       );
 
       debugPrint(
-        'StackTrace régénération token Firebase : '
-        '$stackTrace',
+        'StackTrace régénération token '
+        'Firebase : $stackTrace',
       );
 
       return false;
@@ -624,7 +813,8 @@ class PushNotificationService {
   |--------------------------------------------------------------------------
   */
 
-  static Future<bool> unregisterCurrentDevice({
+  static Future<bool>
+      unregisterCurrentDevice({
     bool deleteFirebaseToken = false,
   }) async {
     try {
@@ -632,13 +822,17 @@ class PushNotificationService {
           await SessionService.getCompanyId();
 
       final clientKey =
-          (await SessionService
-                      .getSynkroClientKey())
+          (
+            await SessionService
+                .getSynkroClientKey()
+          )
                   ?.trim() ??
               '';
 
       final authToken =
-          (await SessionService.getToken())
+          (
+            await SessionService.getToken()
+          )
                   ?.trim() ??
               '';
 
@@ -670,18 +864,23 @@ class PushNotificationService {
         'unregister_device.php',
       );
 
-      final response = await http
-          .post(
-            uri,
-            headers: headers,
-            body: jsonEncode({
-              'device_uuid': deviceUuid,
-              'app_name': 'pointagepro',
-            }),
-          )
-          .timeout(
-            const Duration(seconds: 15),
-          );
+      final response =
+          await http
+              .post(
+                uri,
+                headers: headers,
+                body: jsonEncode({
+                  'device_uuid':
+                      deviceUuid,
+                  'app_name':
+                      'pointagepro',
+                }),
+              )
+              .timeout(
+                const Duration(
+                  seconds: 15,
+                ),
+              );
 
       final result =
           _decodeResponse(response);
@@ -719,16 +918,17 @@ class PushNotificationService {
 
   /*
   |--------------------------------------------------------------------------
-  | Messages reçus lorsque l’application est ouverte
+  | Messages reçus au premier plan
   |--------------------------------------------------------------------------
   */
 
   static void _listenToForegroundMessages() {
-    _foregroundMessageSubscription?.cancel();
+    _foregroundMessageSubscription
+        ?.cancel();
 
     _foregroundMessageSubscription =
         FirebaseMessaging.onMessage.listen(
-      (RemoteMessage message) {
+      (RemoteMessage message) async {
         debugPrint(
           'Notification reçue au premier plan.',
         );
@@ -747,7 +947,19 @@ class PushNotificationService {
           'Données : ${message.data}',
         );
 
-        if (_isCommunicationMessage(message)) {
+        /*
+         * Android n’affiche pas automatiquement la bannière
+         * Firebase lorsque l’application est ouverte.
+         *
+         * Nous créons donc une notification locale.
+         */
+        await _showForegroundNotification(
+          message,
+        );
+
+        if (_isCommunicationMessage(
+          message,
+        )) {
           debugPrint(
             'Nouveau message Synkro détecté.',
           );
@@ -772,12 +984,116 @@ class PushNotificationService {
 
   /*
   |--------------------------------------------------------------------------
-  | Ouverture d’une notification
+  | Affichage d’une notification au premier plan
+  |--------------------------------------------------------------------------
+  */
+
+  static Future<void>
+      _showForegroundNotification(
+    RemoteMessage message,
+  ) async {
+    if (kIsWeb) {
+      return;
+    }
+
+    /*
+     * Sur iOS, Firebase affiche déjà la bannière grâce à
+     * setForegroundNotificationPresentationOptions().
+     *
+     * Une notification locale supplémentaire provoquerait
+     * donc un doublon.
+     */
+    if (defaultTargetPlatform !=
+        TargetPlatform.android) {
+      return;
+    }
+
+    await _initializeLocalNotifications();
+
+    final title =
+        message.notification?.title?.trim();
+
+    final body =
+        message.notification?.body?.trim();
+
+    if ((title == null || title.isEmpty) &&
+        (body == null || body.isEmpty)) {
+      debugPrint(
+        'Notification locale ignorée : '
+        'titre et contenu absents.',
+      );
+
+      return;
+    }
+
+    final conversationId =
+        message.data['conversation_id']
+            ?.toString()
+            .trim();
+
+    final notificationId =
+        message.messageId?.hashCode ??
+            DateTime.now()
+                .millisecondsSinceEpoch
+                .remainder(
+                  2147483647,
+                );
+
+    final androidDetails =
+        AndroidNotificationDetails(
+      _androidMessageChannel.id,
+      _androidMessageChannel.name,
+      channelDescription:
+          _androidMessageChannel.description,
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      showWhen: true,
+      autoCancel: true,
+      category:
+          AndroidNotificationCategory.message,
+      tag:
+          conversationId == null ||
+                  conversationId.isEmpty
+              ? 'synkro_messages'
+              : 'synkro_conversation_'
+                  '$conversationId',
+    );
+
+    final notificationDetails =
+        NotificationDetails(
+      android: androidDetails,
+    );
+
+await _localNotifications.show(
+  id: notificationId,
+  title: title == null || title.isEmpty
+      ? 'Nouveau message'
+      : title,
+  body: body == null || body.isEmpty
+      ? 'Vous avez reçu un nouveau message.'
+      : body,
+  notificationDetails: notificationDetails,
+  payload: jsonEncode(
+    message.data,
+  ),
+);
+
+    debugPrint(
+      'Notification locale Android affichée.',
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Ouverture d’une notification Firebase
   |--------------------------------------------------------------------------
   */
 
   static void _listenToNotificationOpen() {
-    _notificationOpenSubscription?.cancel();
+    _notificationOpenSubscription
+        ?.cancel();
 
     _notificationOpenSubscription =
         FirebaseMessaging
@@ -785,11 +1101,13 @@ class PushNotificationService {
             .listen(
       (RemoteMessage message) {
         debugPrint(
-          'Notification ouverte : '
+          'Notification Firebase ouverte : '
           '${message.data}',
         );
 
-        if (_isCommunicationMessage(message)) {
+        if (_isCommunicationMessage(
+          message,
+        )) {
           CommunicationEvents
               .notifyNewMessage();
         }
@@ -802,6 +1120,10 @@ class PushNotificationService {
       },
     );
 
+    /*
+     * Notification ayant lancé l’application
+     * alors qu’elle était complètement fermée.
+     */
     _messaging.getInitialMessage().then(
       (RemoteMessage? message) {
         if (message == null) {
@@ -813,7 +1135,9 @@ class PushNotificationService {
           'notification : ${message.data}',
         );
 
-        if (_isCommunicationMessage(message)) {
+        if (_isCommunicationMessage(
+          message,
+        )) {
           CommunicationEvents
               .notifyNewMessage();
         }
@@ -830,7 +1154,7 @@ class PushNotificationService {
 
   /*
   |--------------------------------------------------------------------------
-  | Identification d’une notification de messagerie
+  | Identification d’une notification de communication
   |--------------------------------------------------------------------------
   */
 
@@ -839,33 +1163,36 @@ class PushNotificationService {
   ) {
     final data = message.data;
 
-    final notificationType = (
-      data['type'] ??
-      data['notification_type'] ??
-      data['event'] ??
-      data['action'] ??
-      ''
-    )
-        .toString()
-        .trim()
-        .toLowerCase();
+    final notificationType =
+        (
+          data['type'] ??
+              data['notification_type'] ??
+              data['event'] ??
+              data['action'] ??
+              ''
+        )
+            .toString()
+            .trim()
+            .toLowerCase();
 
-    final channel = (
-      data['channel'] ??
-      data['source'] ??
-      ''
-    )
-        .toString()
-        .trim()
-        .toLowerCase();
+    final channel =
+        (
+          data['channel'] ??
+              data['source'] ??
+              ''
+        )
+            .toString()
+            .trim()
+            .toLowerCase();
 
-    final conversationId = (
-      data['conversation_id'] ??
-      data['conversationId'] ??
-      ''
-    )
-        .toString()
-        .trim();
+    final conversationId =
+        (
+          data['conversation_id'] ??
+              data['conversationId'] ??
+              ''
+        )
+            .toString()
+            .trim();
 
     if (conversationId.isNotEmpty) {
       return true;
@@ -878,6 +1205,7 @@ class PushNotificationService {
       'whatsapp_message',
       'incoming_message',
       'new_whatsapp_message',
+      'communication.message.received',
     };
 
     if (communicationTypes.contains(
@@ -905,7 +1233,8 @@ class PushNotificationService {
   |--------------------------------------------------------------------------
   */
 
-  static Map<String, dynamic>? _decodeResponse(
+  static Map<String, dynamic>?
+      _decodeResponse(
     http.Response response,
   ) {
     try {
@@ -983,8 +1312,10 @@ class PushNotificationService {
 
   static Future<void> dispose() async {
     await _tokenSubscription?.cancel();
+
     await _foregroundMessageSubscription
         ?.cancel();
+
     await _notificationOpenSubscription
         ?.cancel();
 
