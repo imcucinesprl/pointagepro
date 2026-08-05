@@ -66,6 +66,9 @@ val hasReleaseSigningConfig =
 android {
     namespace =
         "com.izs.pointagepro"
+    
+    buildToolsVersion =
+        "35.0.1"
 
     compileSdk =
         flutter.compileSdkVersion
